@@ -18,36 +18,46 @@ export const ASM_ORI = 55
 export const ASM_RSHIFT1 = 56
 export const ASM_SLTU = 57
 export const ASM_SLT = 58
+export const ASM_SYSCALL = 59
+
+export const LOG_TRACE_LEN = 24 // TODO: this should be 32
+// Length of the trace
+export const TRACE_LEN = 2 ** LOG_TRACE_LEN
 
 export class Instruction {
+    type: number;
+    addressA: number;
+    addressB: number;
+    addressC: number;
     
-    constructor(type, addressA, addressB, addressC) {
-        this.type = type
-        this.addressA = addressA
-        this.addressB = addressB
-        this.addressC = addressC
+    constructor(type: number, addressA: number, addressB: number, addressC: number) {
+        this.type = type;
+        this.addressA = addressA;
+        this.addressB = addressB;
+        this.addressC = addressC;
     }
+
 
     toString() {
         return `${this.type} ${this.addressA} ${this.addressB} ${this.addressC}`
     }
 }
 
-export const compileProgram = source => source.map(instruction => new Instruction(...instruction))
+//export const compileProgram = source => source.map(instruction => new Instruction(...instruction))
 
 class Snapshot {
-    pc
-    memory
+    pc: number
+    memory: number[]
     stepCount = 0
-    instruction
+    instruction: Instruction
 
-    constructor(memory, instruction, pc = 0) {
+    constructor(memory: number[], instruction: Instruction, pc = 0) {
         this.memory = memory
         this.instruction = instruction
         this.pc = pc
     }
 
-    read(address) {
+    read(address: number): number {
         if(address < 0) 
             throw `ERROR: address=${address} is negative`
         if(address >= this.memory.length) 
@@ -55,7 +65,7 @@ class Snapshot {
         return this.memory[address]
     }
 
-    write(address, value) {
+    write(address: number, value: number) {
         if(address < 0) 
             throw `ERROR: address=${address} is negative`
         if(address >= this.memory.length) 
@@ -64,9 +74,8 @@ class Snapshot {
     }
 }
 
-const executeInstruction = (snapshot) => {
-
-    // console.log(`PC: ${snapshot.pc},  Instruction: ${(snapshot.instruction+'').padEnd(9,' ')} Memory: [${snapshot.memory}]`)
+const executeInstruction = (snapshot: Snapshot) => {
+    //console.log(`PC: ${snapshot.pc},  Instruction: ${(snapshot.instruction+'').padEnd(9,' ')}`)
     switch (snapshot.instruction.type) {
         case ASM_ADD:
             snapshot.write(
@@ -163,13 +172,16 @@ const executeInstruction = (snapshot) => {
             snapshot.pc += 1
             break
         case ASM_SLTU:
-            snapshot.write(snapshot.instruction.addressA, snapshot.read(snapshot.instruction.addressB) >>> 0 < snapshot.read(snapshot.instruction.addressC) >>> 0 ? 1 : 0))
+            snapshot.write(snapshot.instruction.addressA, snapshot.read(snapshot.instruction.addressB) >>> 0 < snapshot.read(snapshot.instruction.addressC) >>> 0 ? 1 : 0);
             snapshot.pc += 1
             break            
         case ASM_SLT:
-            snapshot.write(snapshot.instruction.addressA, snapshot.read(snapshot.instruction.addressB) < snapshot.read(snapshot.instruction.addressC) ? 1 : 0))
+            snapshot.write(snapshot.instruction.addressA, snapshot.read(snapshot.instruction.addressB) < snapshot.read(snapshot.instruction.addressC) ? 1 : 0);
             snapshot.pc += 1
             break            
+        case ASM_SYSCALL:
+            console.log("syscall called")
+            snapshot.pc += 1
         default:
             snapshot.pc += 1
             break
@@ -180,14 +192,14 @@ export class VM {
     program
     memoryEntries
 
-    constructor(programSource, memoryEntries) {
-        this.program = compileProgram(programSource)
+    constructor(program: Instruction[], memoryEntries: number[]) {
+        this.program = program,
         this.memoryEntries = memoryEntries
     }
 
     // essentially if length runs out, machine halts
     run(maxSteps = TRACE_LEN) {
-        const snapshot = new Snapshot([...this.memoryEntries], this.program[0])
+        const snapshot = new Snapshot(this.memoryEntries, this.program[0])
         while (snapshot.pc < this.program.length && snapshot.stepCount < maxSteps) {
             snapshot.instruction = this.program[snapshot.pc]
             executeInstruction(snapshot)

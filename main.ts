@@ -4,353 +4,6 @@ import crypto from "crypto";
 import fs from "fs";
 import * as bitvm from "./bitvm";
 
-/*function emitRiscv(
-  opcodes: EVMOpCode[],
-  parsed: Instruction,
-  startPc: number,
-  pc: number,
-  pageLength: number,
-): void {
-  switch (parsed.instructionName) {
-    // shifts
-    case "SLL":
-    case "SRL": {
-      Opcodes.emitSllSrl(
-        opcodes,
-        parsed.instructionName,
-        parsed.rd,
-        parsed.rs1,
-        parsed.rs2
-      );
-      break;
-    }
-    case "SLLW":
-    case "SRLW": {
-      Opcodes.emitSllwSrlw(
-        opcodes,
-        parsed.instructionName,
-        parsed.rd,
-        parsed.rs1,
-        parsed.rs2
-      );
-      break;
-    }
-    case "SLLI":
-    case "SRLI": {
-      Opcodes.emitSlliSrli(
-        opcodes,
-        parsed.instructionName,
-        parsed.rd,
-        parsed.rs1,
-        parsed.imm
-      );
-      break;
-    }
-    case "SLLIW":
-    case "SRLIW": {
-      Opcodes.emitSlliwSrliw(
-        opcodes,
-        parsed.instructionName,
-        parsed.rd,
-        parsed.rs1,
-        parsed.imm
-      );
-      break;
-    }
-    case "SRA": {
-      Opcodes.emitSra(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
-      break;
-    }
-    case "SRAW": {
-      Opcodes.emitSraw(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
-      break;
-    }
-    case "SRAI": {
-      Opcodes.emitSrai(opcodes, parsed.rd, parsed.rs1, parsed.imm);
-      break;
-    }
-    case "SRAIW": {
-      Opcodes.emitSraiw(opcodes, parsed.rd, parsed.rs1, parsed.imm);
-      break;
-    }
-
-    // arithmetic
-    case "ADD": {
-      Opcodes.emitAdd(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
-      break;
-    }
-    case "ADDW": {
-      Opcodes.emitAddw(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
-      break;
-    }
-    case "ADDIW": {
-      Opcodes.emitAddiw(opcodes, parsed.rd, parsed.rs1, parsed.imm);
-      break;
-    }
-    case "ADDI": {
-      Opcodes.emitAddi(opcodes, parsed.rd, parsed.rs1, parsed.imm);
-      break;
-    }
-    case "SUB": {
-      Opcodes.emitSub(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
-      break;
-    }
-    case "SUBW": {
-      Opcodes.emitSubw(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
-      break;
-    }
-    case "LUI": {
-      Opcodes.emitLui(opcodes, parsed.rd, parsed.unparsedInstruction);
-      break;
-    }
-    case "AUIPC": {
-      opcodes.push({
-        opcode: "PUSH4",
-        parameter: pc.toString(16).toUpperCase().padStart(4, "0"),
-      });
-      Opcodes.emitAuipc(opcodes, parsed.rd, parsed.imm, true);
-      break;
-    }
-    case "OR":
-    case "XOR":
-    case "AND": {
-      Opcodes.emitAndOrXor(
-        opcodes,
-        parsed.instructionName,
-        parsed.rd,
-        parsed.rs1,
-        parsed.rs2
-      );
-      break;
-    }
-    case "ORI":
-    case "XORI":
-    case "ANDI": {
-      Opcodes.emitAndOrXori(
-        opcodes,
-        parsed.instructionName,
-        parsed.rd,
-        parsed.rs1,
-        parsed.imm
-      );
-      break;
-    }
-    // compare
-    case "SLT": {
-      Opcodes.emitSlt(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
-      break;
-    }
-    case "SLTU"
-
-      Opcodes.emitSltu(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
-      break;
-    }
-
-    case "SLTI": {
-      Opcodes.emitSlti(opcodes, parsed.rd, parsed.rs1, parsed.imm);
-      break;
-    }
-
-    case "SLTIU": {
-      Opcodes.emitSltiu(opcodes, parsed.rd, parsed.rs1, parsed.imm);
-      break;
-    }
-    // branches
-    case "BNE":
-      opcodes.push({
-        opcode: "PUSH4",
-        parameter: pc.toString(16).toUpperCase().padStart(8, "0"),
-      });
-      Opcodes.emitBne(opcodes, parsed.rs1, parsed.rs2, parsed.imm, pc, startPc, pageLength);
-      break;
-    case "BEQ":
-      opcodes.push({
-        opcode: "PUSH4",
-        parameter: pc.toString(16).toUpperCase().padStart(8, "0"),
-      });
-      Opcodes.emitBeq(opcodes, parsed.rs1, parsed.rs2, parsed.imm, pc, startPc, pageLength);
-      break;
-    case "BLT":
-      opcodes.push({
-        opcode: "PUSH4",
-        parameter: pc.toString(16).toUpperCase().padStart(8, "0"),
-      });
-      Opcodes.emitBlt(opcodes, parsed.rs1, parsed.rs2, parsed.imm, pc, startPc, pageLength);
-      break;
-    case "BGE":
-      opcodes.push({
-        opcode: "PUSH4",
-        parameter: pc.toString(16).toUpperCase().padStart(8, "0"),
-      });
-      Opcodes.emitBge(opcodes, parsed.rs1, parsed.rs2, parsed.imm, pc, startPc, pageLength);
-      break;
-    case "BLTU":
-      opcodes.push({
-        opcode: "PUSH4",
-        parameter: pc.toString(16).toUpperCase().padStart(8, "0"),
-      });
-      Opcodes.emitBltu(opcodes, parsed.rs1, parsed.rs2, parsed.imm, pc, startPc, pageLength);
-      break;
-    case "BGEU":
-      opcodes.push({
-        opcode: "PUSH4",
-        parameter: pc.toString(16).toUpperCase().padStart(8, "0"),
-      });
-      Opcodes.emitBgeu(opcodes, parsed.rs1, parsed.rs2, parsed.imm, pc, startPc, pageLength);
-      break;
-    // jump & link
-    case "JAL": {
-      opcodes.push({
-        opcode: "PUSH4",
-        parameter: pc.toString(16).toUpperCase().padStart(8, "0"),
-      });
-      Opcodes.emitJal(opcodes, parsed.rd, parsed.imm, pc, startPc, pageLength);
-      break;
-    }
-    case "JALR": {
-      opcodes.push({
-        opcode: "PUSH4",
-        parameter: pc.toString(16).toUpperCase().padStart(8, "0"),
-      });
-      Opcodes.emitJalr(opcodes, parsed.rd, parsed.rs1, parsed.imm);
-      break;
-    }
-    // Synch (do nothing, single-thread)
-    case "FENCE":
-    case "FENCE.I":
-      break;
-    // environment
-    case "EBREAK":
-      opcodes.push({ opcode: "INVALID", comment: "EBREAK" });
-      break;
-    case "ECALL":
-      Opcodes.emitEcall(opcodes, pc);
-      break;
-    // loads
-    case "LB":
-      Opcodes.emitDirtyCheck(opcodes, pc);
-      Opcodes.emitLb(opcodes, parsed.rd, parsed.rs1, parsed.imm);
-      break;
-    case "LH":
-      Opcodes.emitDirtyCheck(opcodes, pc);
-      Opcodes.emitLh(opcodes, parsed.rd, parsed.rs1, parsed.imm);
-      break;
-    case "LBU":
-      Opcodes.emitDirtyCheck(opcodes, pc);
-      Opcodes.emitLbu(opcodes, parsed.rd, parsed.rs1, parsed.imm);
-      break;
-    case "LHU":
-      Opcodes.emitDirtyCheck(opcodes, pc);
-      Opcodes.emitLhu(opcodes, parsed.rd, parsed.rs1, parsed.imm);
-      break;
-    case "LWU":
-      Opcodes.emitDirtyCheck(opcodes, pc);
-      Opcodes.emitLwu(opcodes, parsed.rd, parsed.rs1, parsed.imm);
-      break;
-    case "LW":
-      Opcodes.emitDirtyCheck(opcodes, pc);
-      Opcodes.emitLw(opcodes, parsed.rd, parsed.rs1, parsed.imm);
-      break;
-    case "LD":
-      Opcodes.emitDirtyCheck(opcodes, pc);
-      Opcodes.emitLd(opcodes, parsed.rd, parsed.rs1, parsed.imm);
-      break;
-    // stores
-    case "SB":
-      Opcodes.emitDirtyCheck(opcodes, pc);
-      Opcodes.emitSb(opcodes, parsed.rs1, parsed.rs2, parsed.imm);
-      break;
-    case "SH":
-      Opcodes.emitDirtyCheck(opcodes, pc);
-      Opcodes.emitSh(opcodes, parsed.rs1, parsed.rs2, parsed.imm);
-      break;
-    case "SW":
-      Opcodes.emitDirtyCheck(opcodes, pc);
-      Opcodes.emitSw(opcodes, parsed.rs1, parsed.rs2, parsed.imm);
-      break;
-    case "SD":
-      Opcodes.emitSd(opcodes, parsed.rs1, parsed.rs2, parsed.imm);
-      break;
-    case "MUL":
-      Opcodes.emitMul(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
-      break;
-    case "MULH":
-      Opcodes.emitMulh(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
-      break;
-    case "MULHU":
-      Opcodes.emitMulhu(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
-      break;
-    case "MULHSU":
-      Opcodes.emitMulhsu(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
-      break;
-    case "MULW":
-      Opcodes.emitMulw(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
-      break;
-    case "DIV":
-      Opcodes.emitDiv(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
-      break;
-    case "DIVW":
-      Opcodes.emitDivw(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
-      break;
-    case "DIVU":
-      Opcodes.emitDivu(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
-      break;
-    case "DIVUW":
-      Opcodes.emitDivuw(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
-      break;
-    case "REM":
-      Opcodes.emitRem(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
-      break;
-    case "REMU":
-      Opcodes.emitRemu(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
-      break;
-    case "REMW":
-      Opcodes.emitRemw(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
-      break;
-    case "REMUW":
-      Opcodes.emitRemuw(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
-      break;
-    case "LR.W":
-    case "LR.D":
-      Opcodes.emitDirtyCheck(opcodes, pc);
-      Opcodes.emitLr(opcodes, parsed.rd, parsed.rs1, pc, parsed.instructionName);
-      break;
-   case "SC.W":
-    case "SC.D":
-      Opcodes.emitSc(opcodes, parsed.rd, parsed.rs1, parsed.rs2, pc, parsed.instructionName);
-      break;
-    case "AMOADD.W":
-      Opcodes.emitAmoaddW(opcodes, parsed.rd, parsed.rs1, parsed.rs2, pc, parsed.instructionName);
-      break;
-    case "UNIMPL":
-      opcodes.push({ opcode: "INVALID" });
-      break;
-    default:
-      throw new Error("Unknown instruction: " + parsed.instructionName);
-  }
-}
-
-function printO(cycle: number, op: EVMOpCode) {
-  const pc = op.pc;
-  if (pc == undefined) {
-    throw new Error("Missing pc");
-  }
-  console.log(
-    cycle + "\t",
-    pc.toString(16).toUpperCase() +
-      "\t" +
-      op.opcode +
-      "\t" +
-      (op.parameter ? op.parameter : "") +
-      "\t " +
-      (op.name ? ";; " + op.name : "") +
-      (op.find_name ? ";; " + op.find_name : "") +
-      "\t " +
-      (op.comment ? " ;; # " + op.comment : "")
-  );
-}
-*/
-
 /* memory layout
 
   0 = always 0
@@ -363,8 +16,8 @@ export interface BitVMOpcode {
   pc?: number;
   label?: string;
   find_label?: string;
-  find_riscv_pc?: number;
   find_target?: string; // addressA, addressB, or addressC -- where to write resolved label to in instruction
+  comment?: string;
 }
 
 function reg2mem(reg: number) {
@@ -379,55 +32,55 @@ function emitBitvmOp(opcodes: BitVMOpcode[], op: number, addressA: number, addre
    opcodes.push({ opcode: new bitvm.Instruction(op, addressA, addressB, addressC) });
 }
 
-function emitRiscvADD(opcodes: BitVMOpcode[], rd: number, rs1: number, rs2: number) {
+function emitADD(opcodes: BitVMOpcode[], rd: number, rs1: number, rs2: number) {
    if (rd != 0) { 
      emitBitvmOp(opcodes, bitvm.ASM_ADD, reg2mem(rd), reg2mem(rs1), reg2mem(rs2));
    }
 }
 
-function emitRiscvADDI(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number) {
+function emitADDI(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number) {
    if (rd != 0) { 
      emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rd), reg2mem(rs1), imm);
    }
 }
 
-function emitRiscvSUB(opcodes: BitVMOpcode[], rd: number, rs1: number, rs2: number) {
+function emitSUB(opcodes: BitVMOpcode[], rd: number, rs1: number, rs2: number) {
    if (rd != 0) { 
      emitBitvmOp(opcodes, bitvm.ASM_SUB, reg2mem(rd), reg2mem(rs1), reg2mem(rs2));
    }
 }
 
-function emitRiscvXOR(opcodes: BitVMOpcode[], rd: number, rs1: number, rs2: number) {
+function emitXOR(opcodes: BitVMOpcode[], rd: number, rs1: number, rs2: number) {
    if (rd != 0) { 
      emitBitvmOp(opcodes, bitvm.ASM_XOR, reg2mem(rd), reg2mem(rs1), reg2mem(rs2));
    }
 }
 
-function emitRiscvXORI(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number) {
+function emitXORI(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number) {
    if (rd != 0) { 
      emitBitvmOp(opcodes, bitvm.ASM_XORI, reg2mem(rd), reg2mem(rs1), imm);
    }
 }
 
-function emitRiscvAND(opcodes: BitVMOpcode[], rd: number, rs1: number, rs2: number) {
+function emitAND(opcodes: BitVMOpcode[], rd: number, rs1: number, rs2: number) {
    if (rd != 0) { 
      emitBitvmOp(opcodes, bitvm.ASM_AND, reg2mem(rd), reg2mem(rs1), reg2mem(rs2));
    }
 }
 
-function emitRiscvANDI(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number) {
+function emitANDI(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number) {
    if (rd != 0) { 
      emitBitvmOp(opcodes, bitvm.ASM_ANDI, reg2mem(rd), reg2mem(rs1), imm);
    }
 }
 
-function emitRiscvOR(opcodes: BitVMOpcode[], rd: number, rs1: number, rs2: number) {
+function emitOR(opcodes: BitVMOpcode[], rd: number, rs1: number, rs2: number) {
    if (rd != 0) { 
      emitBitvmOp(opcodes, bitvm.ASM_OR, reg2mem(rd), reg2mem(rs1), reg2mem(rs2));
    }
 }
 
-function emitRiscvORI(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number) {
+function emitORI(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number) {
    if (rd != 0) { 
      emitBitvmOp(opcodes, bitvm.ASM_ORI, reg2mem(rd), reg2mem(rs1), imm);
    }
@@ -437,15 +90,15 @@ function emitJAL(opcodes: BitVMOpcode[], rd: number, imm: number, riscv_pc: numb
    if (rd != 0) {
      emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rd), reg2mem(0), riscv_pc + 4);
    }
-   opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, reg2mem(0), reg2mem(0), 0) }, find_riscv_pc: (riscv_pc + imm) & 0xFFFFFFFF, find_target: "addressC"});
+   opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, reg2mem(0), reg2mem(0), 0), find_label: "_riscv_pc" + ((riscv_pc + imm) & 0xFFFFFFFF), find_target: "addressC"});
 }
 
-function emitJALR(opcodes: BitVMOpcode[], rd: number, imm: number, riscv_pc: number) {
+function emitJALR(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number, riscv_pc: number) {
    if (rd != 0) {
      emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rd), reg2mem(0), riscv_pc + 4);
    }
-   emitBitVmop(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), imm);
-   emitBitVmop(opcodes, bitvm.ASM_JMP, tmp(), 0, 0);
+   emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), imm);
+   emitBitvmOp(opcodes, bitvm.ASM_JMP, tmp(), 0, 0);
 }
 
 function emitAUIPC(opcodes: BitVMOpcode[], rd: number, imm: number, riscv_pc: number) {
@@ -461,14 +114,14 @@ function emitLUI(opcodes: BitVMOpcode[], rd: number, imm: number) {
 }
 
 function emitBEQ(opcodes: BitVMOpcode[], rs1: number, rs2: number, imm: number, riscv_pc: number) {
-   opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, reg2mem(rs1), reg2mem(rs2),  0),  find_riscv_pc: (riscv_pc + imm) & 0xFFFFFFFF, find_target: "addressC"});
+   opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, reg2mem(rs1), reg2mem(rs2),  0), find_label: "_riscv_pc_" + ((riscv_pc + imm) & 0xFFFFFFFF), find_target: "addressC"});
 }
 
 function emitBNE(opcodes: BitVMOpcode[], rs1: number, rs2: number, imm: number, riscv_pc: number) {
-   opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BNE, reg2mem(rs1), reg2mem(rs2), 0), find_riscv_pc: (riscv_pc + imm) & 0xFFFFFFFF, find_target: "addressC"});
+   opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BNE, reg2mem(rs1), reg2mem(rs2), 0), find_label: "_riscv_pc_" + ((riscv_pc + imm) & 0xFFFFFFFF), find_target: "addressC"});
 }
 
-function emitSLLI(opcodes: bitVMOpcode[], rd: number, rs1: number, imm: number) {
+function emitSLLI(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number) {
     if (rd != 0) {
       emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rd), reg2mem(rs1), 0);
       for (let i = 0; i < imm; i++) {
@@ -477,7 +130,7 @@ function emitSLLI(opcodes: bitVMOpcode[], rd: number, rs1: number, imm: number) 
     }
 }
 
-function emitSRLI(opcodes: bitVMOpcode[], rd: number, rs1: number, imm: number) {
+function emitSRLI(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number) {
     if (rd != 0) {
       emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rd), reg2mem(rs1), 0);
       for (let i = 0; i < imm; i++) {
@@ -486,69 +139,62 @@ function emitSRLI(opcodes: bitVMOpcode[], rd: number, rs1: number, imm: number) 
     }
 }
 
-function emitSLT(opcodes: bitVMOpcode[], rd: number, rs1: number, imm: number) {
+function emitSLT(opcodes: BitVMOpcode[], rd: number, rs1: number, rs2: number) {
     if (rd != 0) {
       emitBitvmOp(opcodes, bitvm.ASM_SLT, reg2mem(rd), reg2mem(rs1), reg2mem(rs2));
     }
 }
 
-function emitSLTU(opcodes: bitVMOpcode[], rd: number, rs1: number, imm: number) {
+function emitSLTU(opcodes: BitVMOpcode[], rd: number, rs1: number, rs2: number) {
     if (rd != 0) {
       emitBitvmOp(opcodes, bitvm.ASM_SLTU, reg2mem(rd), reg2mem(rs1), reg2mem(rs2));
     }
 }
 
-function emitSLTIU(opcodes: bitVMOpcode[], rd: number, rs1: number, imm: number) {
+function emitSLTIU(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number) {
     if (rd != 0) {
       emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(0), imm);
       emitBitvmOp(opcodes, bitvm.ASM_SLTU, reg2mem(rd), reg2mem(rs1), tmp());
     }
 }
 
-function emitSLTI(opcodes: bitVMOpcode[], rd: number, rs1: number, imm: number) {
+function emitSLTI(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number) {
     if (rd != 0) {
       emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(0), imm);
       emitBitvmOp(opcodes, bitvm.ASM_SLT, reg2mem(rd), reg2mem(rs1), tmp());
     }
 }
 
-function emitBLT(opcodes: bitVMOpcode[], rs1: number, rs2: number, imm: number, riscv_pc: number) {
-    if (rd != 0) {
-      emitBitvmOp(opcodes, bitvm.ASM_SLT, tmp(), reg2mem(rs1), reg2mem(rs2));
-      opcodes.push({ opcode: { type: bitvm.ASM_BEQ, addressA: tmp(), addressB: reg2mem(0), addressC: 0 }, find_riscv_pc: (riscv_pc + imm) & 0xFFFFFFFF, find_target: "addressC"});
-    }
+function emitBLT(opcodes: BitVMOpcode[], rs1: number, rs2: number, imm: number, riscv_pc: number) {
+    emitBitvmOp(opcodes, bitvm.ASM_SLT, tmp(), reg2mem(rs1), reg2mem(rs2));
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, tmp(), reg2mem(0), 0), find_label: "_riscv_pc_" + ((riscv_pc + imm) & 0xFFFFFFFF), find_target: "addressC"});
 }
 
-function emitBLTU(opcodes: bitVMOpcode[], rs1: number, rs2: number, imm: number, riscv_pc: number) {
-    if (rd != 0) {
-      emitBitvmOp(opcodes, bitvm.ASM_SLTU, tmp(), reg2mem(rs1), reg2mem(rs2));
-      opcodes.push({ opcode: { type: bitvm.ASM_BEQ, addressA: tmp(), addressB: reg2mem(0), addressC: 0 }, find_riscv_pc: (riscv_pc + imm) & 0xFFFFFFFF, find_target: "addressC"});
-    }
+function emitBLTU(opcodes: BitVMOpcode[], rs1: number, rs2: number, imm: number, riscv_pc: number) {
+    emitBitvmOp(opcodes, bitvm.ASM_SLTU, tmp(), reg2mem(rs1), reg2mem(rs2));
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, tmp(), reg2mem(0), 0), find_label: "_riscv_pc_ " + ((riscv_pc + imm) & 0xFFFFFFFF), find_target: "addressC"});
 }
 
-function emitBGE(opcodes: bitVMOpcode[], rs1: number, rs2: number, imm: number, riscv_pc: number) {
-    if (rd != 0) {
-      emitBitvmOp(opcodes, bitvm.ASM_SLT, tmp(), reg2mem(rs1), reg2mem(rs2));
-      opcodes.push({ opcode: { type: bitvm.ASM_BNE, addressA: tmp(), addressB: reg2mem(0), addressC: 0 }, find_riscv_pc: (riscv_pc + imm) & 0xFFFFFFFF, find_target: "addressC"});
-    }
+function emitBGE(opcodes: BitVMOpcode[], rs1: number, rs2: number, imm: number, riscv_pc: number) {
+    emitBitvmOp(opcodes, bitvm.ASM_SLT, tmp(), reg2mem(rs1), reg2mem(rs2));
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BNE, tmp(), reg2mem(0), 0), find_label: "_riscv_pc_" + ((riscv_pc + imm) & 0xFFFFFFFF), find_target: "addressC"});
 }
 
-function emitBGEU(opcodes: bitVMOpcode[], rs1: number, rs2: number, imm: number, riscv_pc: number) {
-    if (rd != 0) {
-      emitBitvmOp(opcodes, bitvm.ASM_SLTU, tmp(), reg2mem(rs1), reg2mem(rs2));
-      opcodes.push({ opcode: { type: bitvm.ASM_BNE, addressA: tmp(), addressB: reg2mem(0), addressC: 0 }, find_riscv_pc: (riscv_pc + imm) & 0xFFFFFFFF, find_target: "addressC"});
-    }
+function emitBGEU(opcodes: BitVMOpcode[], rs1: number, rs2: number, imm: number, riscv_pc: number) {
+    emitBitvmOp(opcodes, bitvm.ASM_SLTU, tmp(), reg2mem(rs1), reg2mem(rs2));
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BNE, tmp(), reg2mem(0), 0), find_label: "_riscv_pc_" + ((riscv_pc + imm) & 0xFFFFFFFF), find_target: "addressC"});
 }
 
-function emitECALL(opcodes: bitVMOpcode[]) {
-    // tmp() acts as our status buffer, 0 = OK, 1 = not OK
-    emitBitVmOp(opcodes, bitvm.ADDI, tmp(), reg2mem(0), 0);
-    opcodes.push({ opcode: { type: bitvm.ASM_BEQ, addressA: reg2mem(0), addressB: reg2mem(0), addressC: 0 }, find_label: "_program_end", find_target: "addressC"});
+function emitECALL(opcodes: BitVMOpcode[]) {
+    // tmp() acts as our status buffer, 0 = weird shit 1 = OK, 2 = not OK
+    emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(0), 1);
+    // if x10 / a0 is 0, finish program
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, reg2mem(10), reg2mem(0), 0), find_label: "_program_end", find_target: "addressC", comment: "ECALL"});
 }
 
-function emitEBREAK(opcodes: bitVMOpcode[]) {
-    emitBitVmOp(opcodes, bitvm.ADDI, tmp(), reg2mem(0), 1);
-    opcodes.push({ opcode: { type: bitvm.ASM_BEQ, addressA: reg2mem(0), addressB: reg2mem(0), addressC: 0 }, find_label: "_program_end", find_target: "addressC"});
+function emitEBREAK(opcodes: BitVMOpcode[]) {
+    emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(0), 2);
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, reg2mem(0), reg2mem(0), 0), find_label: "_program_end", find_target: "addressC"});
 }
 
 
@@ -626,14 +272,14 @@ function emitEBREAK(opcodes: bitVMOpcode[]) {
   
 function emitInstr(opcodes: BitVMOpcode[], pc: number, parsed: Instruction) {
   switch (parsed.instructionName) {
-    case "SLL":
+    /* case "SLL":
       emitSLL(
         opcodes,
         parsed.rd,
         parsed.rs1,
         parsed.rs2
-      );
-    case "SRL": {
+      ); */
+    /* case "SRL": {
       emitSRL(
         opcodes,
         parsed.rd,
@@ -641,17 +287,16 @@ function emitInstr(opcodes: BitVMOpcode[], pc: number, parsed: Instruction) {
         parsed.rs2
       );
       break;
-    }
+    } */
     case "SLLI": {
        emitSLLI(
         opcodes,
-        parsed.instructionName,
         parsed.rd,
         parsed.rs1,
         parsed.imm
       );
       break;
-
+    }
     case "SRLI": {
       emitSRLI(
         opcodes,
@@ -661,14 +306,15 @@ function emitInstr(opcodes: BitVMOpcode[], pc: number, parsed: Instruction) {
       );
       break;
     }
-    case "SRA": {
+    /* case "SRA": {
       emitSRA(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
       break;
-    }
+    } */
+    /*
     case "SRAI": {
       emitSRAI(opcodes, parsed.rd, parsed.rs1, parsed.imm);
       break;
-    }
+    } */
     // arithmetic
     case "ADD": {
       emitADD(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
@@ -747,8 +393,7 @@ function emitInstr(opcodes: BitVMOpcode[], pc: number, parsed: Instruction) {
       emitSLT(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
       break;
     }
-    case "SLTU"
-
+    case "SLTU": {
       emitSLTU(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
       break;
     }
@@ -814,9 +459,11 @@ function riscvToBitVM(pc_base: number, buf: Buffer): BitVMOpcode[] {
     const parsed = parseInstruction(instr);
     const instrName = parsed.instructionName;
 
-    console.log(parsed);
+    // null-op for labels
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_ADDI, reg2mem(0), reg2mem(0), 0), label: "_riscv_pc_" + (pc_base + i), comment: JSON.stringify(parsed) });    
     emitInstr(opcodes, pc_base + i, parsed);
   }
+  opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_ADDI, reg2mem(0), reg2mem(0), 0), label: "_program_end"});
   return opcodes;
 }
 
@@ -848,14 +495,11 @@ async function transpile(fileContents: Buffer) {
     if (
       seg.vaddr !== 0 &&
       seg.typeDescription == "Load" &&
-      Number(seg.vaddr) >= 0x20000000
+      Number(seg.vaddr) < 0x110000
     ) {
       // ^^^^ XXX this is really lazy
       if (Number(seg.vaddr) % 4096 !== 0) {
         throw new Error("Segment should be 4K-aligned");
-      }
-      if (Number(seg.vaddr) !== 0x20000000) {
-        throw new Error("Code segment should start at 0x20000000");
       }
       const data = fileContents.slice(seg.offset, seg.offset + seg.filesz);
       context.codepage = data;
@@ -863,7 +507,7 @@ async function transpile(fileContents: Buffer) {
     } else if (
       seg.vaddr !== 0 &&
       seg.typeDescription == "Load" &&
-      Number(seg.vaddr) < 0x20000000
+      Number(seg.vaddr) >= 0x110000
     ) {
       if (Number(seg.vaddr) % 4096 !== 0) {
         throw new Error("Segment should be 4K-aligned");
@@ -873,8 +517,56 @@ async function transpile(fileContents: Buffer) {
       context.data_addr = Number(seg.vaddr)
     }
    }
-   console.log(context);
-   console.log(riscvToBitVM(context.codepage));
+   let assembly = riscvToBitVM(context.code_addr, context.codepage);
+   // assign program counters
+   for (let i = 0; i < assembly.length; i++) {
+      assembly[i].pc = i;
+   }
+   for (let i = 0; i < assembly.length; i++) {
+      if (assembly[i].find_label) { 
+         let j = 0;
+         for (; j < assembly.length; j++) {
+            if (assembly[j].label === assembly[i].find_label) {
+               break;
+            }
+         }
+         if (j == assembly.length) {
+           throw "label not found " + assembly[i].find_label;
+         }
+         
+         if (assembly[j].pc === undefined) {
+           throw "No PC!";
+         }
+         if (assembly[i].find_target === "addressA") {
+           assembly[i].opcode.addressA = assembly[j].pc as number
+         } else if (assembly[i].find_target === "addressB") {
+           assembly[i].opcode.addressB = assembly[j].pc as number
+         } else if (assembly[i].find_target === "addressC") {
+           assembly[i].opcode.addressC = assembly[j].pc as number
+         } else throw "Unknown find_target " + assembly[i].find_target;
+      } 
+   }
+
+   let memory = Array(16*1024*1024).fill(0);
+   for (let i = 0; i < context.codepage.length; i += 4) {
+      for (let j = 0; j < assembly.length; j++) {
+          if (assembly[j].label == ("_riscv_pc_" + (context.code_addr + i))) {
+             memory[context.code_addr + i] = assembly[j].pc;
+          }
+      }
+   }   
+   
+   for (let i = 0; i < context.datapage.length; i += 4) {
+       memory[context.data_addr + i] = context.datapage.readUInt32LE(i);
+   }
+   let bitvm_code: bitvm.Instruction[] = [];
+   for (let i = 0; i < assembly.length; i++) {
+      bitvm_code.push(assembly[i].opcode);
+   }
+
+   let vm = new bitvm.VM(bitvm_code, memory);
+   let result_snapshot = vm.run();
+   console.log(process.argv[2] + " result code: " + result_snapshot.read(tmp()));
 }
 
 transpile(fs.readFileSync(process.argv[2])).catch((err) => {
