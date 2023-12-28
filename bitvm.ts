@@ -80,14 +80,14 @@ const executeInstruction = (snapshot: Snapshot) => {
         case ASM_ADD:
             snapshot.write(
                 snapshot.instruction.addressA,
-                (snapshot.read(snapshot.instruction.addressB) >>> 0 + snapshot.read(snapshot.instruction.addressC) >>> 0) & 0xFFFFFFFF
+                (snapshot.read(snapshot.instruction.addressB) + snapshot.read(snapshot.instruction.addressC)) & 0xFFFFFFFF
             )
             snapshot.pc += 1
             break
         case ASM_SUB:
             snapshot.write(
                 snapshot.instruction.addressA,
-                (snapshot.read(snapshot.instruction.addressB) >>> 0 - snapshot.read(snapshot.instruction.addressC) >>> 0) & 0xFFFFFFFF
+                (snapshot.read(snapshot.instruction.addressB) - snapshot.read(snapshot.instruction.addressC)) & 0xFFFFFFFF
             )
             snapshot.pc += 1
             break
