@@ -103,7 +103,8 @@ function emitJALR(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number, 
 
 function emitAUIPC(opcodes: BitVMOpcode[], rd: number, imm: number, riscv_pc: number) {
    if (rd != 0) {
-     emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rd), reg2mem(0), (riscv_pc + (imm << 12)) & 0xFFFFFFFF);
+     // imm is already << 12'ed
+     emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rd), reg2mem(0), (riscv_pc + imm) & 0xFFFFFFFF);
    }
 }
 
@@ -559,6 +560,7 @@ async function transpile(fileContents: Buffer) {
          } else throw "Unknown find_target " + assembly[i].find_target;
       } 
    }
+   console.log(assembly)
 
    let memory = Array(16*1024*1024).fill(0);
    for (let i = 0; i < context.codepage.length; i += 4) {
