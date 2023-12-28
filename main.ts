@@ -375,7 +375,7 @@ function emitInstr(opcodes: BitVMOpcode[], pc: number, parsed: Instruction) {
       break;
     }
     case "ORI": {
-      emitOR
+      emitORI
       (
         opcodes,
         parsed.rd,
@@ -560,7 +560,7 @@ async function transpile(fileContents: Buffer) {
          } else throw "Unknown find_target " + assembly[i].find_target;
       } 
    }
-   console.log(assembly)
+   //console.log(assembly)
 
    let memory = Array(16*1024*1024).fill(0);
    for (let i = 0; i < context.codepage.length; i += 4) {
