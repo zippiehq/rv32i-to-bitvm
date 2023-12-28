@@ -250,37 +250,30 @@ function emitEBREAK(opcodes: BitVMOpcode[]) {
      srl_UNIQ_loop_end:
      if (rd != 0) 
        bitVM_ADDI(reg2mem(rd), tmp(), 0)
-
-   risc-v SRA rd, rs1, rs2
-     bitVM_ADDI(tmp(), reg2mem(rs1), 0) # result
-     bitVM_ADDI(tmp2(), reg2mem(rs2), 0) # shift amount
-     bitVM_ANDI(tmp3(), reg2mem(rs1), 0x80000000) # MSB
-     
-     _SRA_UNIQ_loop_start:
-     # check if shift amount is zero
-     bitVM_BEQ(reg2mem(0), tmp(), sra_UNIQ_loop_end)
-     
-     # Call RSHIFT1
-     bitVM_RSHIFT1(tmp(), tmp())
-     bitVM_OR(tmp(), tmp(), tmp3())  # add MSB
-     bitVM_SUBI(tmp2(), tmp2(), 1)
-    
-     bitVM_BEQ(reg2mem(0), reg2mem(0), srl_UNIQ_loop_start)
-     
-     srl_UNIQ_loop_end:
-     if (rd != 0) 
-       bitVM_ADDI(reg2mem(rd), tmp(), 0)
-
-    risc-v SRAI rd, rs1, imm:
-    
-     if (rd != 0): 
-        bitVM_ADDI(reg2mem(rd), reg2mem(rs1), 0)
-        bitVM_ANDI(tmp3(), reg2mem(rs1), 0x80000000) # MSB
-        repeat imm times:  
-          bitVM_RSHIFT1(reg2mem(rd), reg2mem(rd))
-          bitVM_OR(reg2mem(rd), reg2mem(rs1), tmp3()) // extend with MSB
-                 
 */
+
+function emitSRA(opcodes: BitVMOpcode[], rd: number, rs1: number, rs2: number) {
+  const uniq = crypto.randomBytes(32).toString("hex");
+  if (rd != 0) {
+    emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), 0); // result
+    emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp2(), reg2mem(rs2), 0); // shift amount
+    emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), tmp2(), 0x1F);
+
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_ADDI, reg2mem(0), reg2mem(0), 0), label: "_SRA_" + uniq + "_loop_start"});
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, reg2mem(0), tmp2(), 0), find_label: "_SRA_" + uniq + "_loop_end", find_target: "addressC" });
+    
+    emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp3(), tmp(), 0x80000000);
+    emitBitvmOp(opcodes, bitvm.ASM_RSHIFT1, tmp(), tmp(), 0);
+    emitBitvmOp(opcodes, bitvm.ASM_OR, tmp(), tmp(), tmp3()); // add MSB
+    emitBitvmOp(opcodes, bitvm.ASM_SUBI, tmp2(), tmp2(), 1);
+    
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, reg2mem(0), reg2mem(0), 0), find_label: "_SRA_" + uniq + "_loop_start", find_target: "addressC" }); 
+ 
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_ADDI, reg2mem(0), reg2mem(0), 0), label: "_SRA_" + uniq + "_loop_end"});
+    
+    emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rd), tmp(), 0); // result
+  }
+}
   
 function emitInstr(opcodes: BitVMOpcode[], pc: number, parsed: Instruction) {
   switch (parsed.instructionName) {
@@ -318,10 +311,10 @@ function emitInstr(opcodes: BitVMOpcode[], pc: number, parsed: Instruction) {
       );
       break;
     }
-    /* case "SRA": {
+    case "SRA": {
       emitSRA(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
       break;
-    } */
+    }
     case "SRAI": {
       emitSRAI(opcodes, parsed.rd, parsed.rs1, parsed.imm);
       break;
@@ -560,7 +553,7 @@ async function transpile(fileContents: Buffer) {
          } else throw "Unknown find_target " + assembly[i].find_target;
       } 
    }
-   //console.log(assembly)
+//   console.log(assembly)
 
    let memory = Array(16*1024*1024).fill(0);
    for (let i = 0; i < context.codepage.length; i += 4) {

@@ -39,7 +39,28 @@ export class Instruction {
 
 
     toString() {
-        return `${this.type} ${this.addressA} ${this.addressB} ${this.addressC}`
+        let lookup: Record<string, string> = {
+            "42": "ASM_ADD",
+            "43": "ASM_SUB",
+            "44": "ASM_MUL",
+            "45": "ASM_JMP",
+            "46": "ASM_BEQ", 
+            "47": "ASM_BNE",
+            "48": "ASM_ADDI",
+            "49": "ASM_SUBI",
+            "50": "ASM_XORI",
+            "51": "ASM_XOR",
+            "52": "ASM_OR",
+            "53": "ASM_AND",
+            "54": "ASM_ANDI",
+            "55": "ASM_ORI",
+            "56": "ASM_RSHIFT1",
+            "57": "ASM_SLTU",
+            "58": "ASM_SLT",
+            "59": "ASM_SYSCALL"
+        }
+        let type = lookup["" + this.type];
+        return `${type} ${this.addressA} ${this.addressB} ${this.addressC}`
     }
 }
 
@@ -75,7 +96,10 @@ class Snapshot {
 }
 
 const executeInstruction = (snapshot: Snapshot) => {
-    //console.log(`PC: ${snapshot.pc},  Instruction: ${(snapshot.instruction+'').padEnd(9,' ')}`)
+/*    console.log(`PC: ${snapshot.pc},  Instruction: ${(snapshot.instruction+'').padEnd(9,' ')}`)
+    for (let i = 0; i < 35; i++) {
+        console.log('x' + i + " = " + (snapshot.read(i) >>> 0).toString(16));
+    }*/
     switch (snapshot.instruction.type) {
         case ASM_ADD:
             snapshot.write(
