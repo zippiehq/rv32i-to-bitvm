@@ -90,7 +90,7 @@ function emitJAL(opcodes: BitVMOpcode[], rd: number, imm: number, riscv_pc: numb
    if (rd != 0) {
      emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rd), reg2mem(0), riscv_pc + 4);
    }
-   opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, reg2mem(0), reg2mem(0), 0), find_label: "_riscv_pc" + ((riscv_pc + imm) & 0xFFFFFFFF), find_target: "addressC"});
+   opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, reg2mem(0), reg2mem(0), 0), find_label: "_riscv_pc_" + ((riscv_pc + imm) & 0xFFFFFFFF), find_target: "addressC"});
 }
 
 function emitJALR(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number, riscv_pc: number) {
@@ -107,9 +107,9 @@ function emitAUIPC(opcodes: BitVMOpcode[], rd: number, imm: number, riscv_pc: nu
    }
 }
 
-function emitLUI(opcodes: BitVMOpcode[], rd: number, imm: number) {
+function emitLUI(opcodes: BitVMOpcode[], rd: number, insn: number) {
    if (rd != 0) {
-     emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rd), reg2mem(0), (imm << 12) & 0xFFFFFFFF);
+     emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rd), reg2mem(0), ((insn & 0xfffff000) >>> 0) & 0xFFFFFFFF);
    }
 }
 
@@ -566,7 +566,7 @@ async function transpile(fileContents: Buffer) {
 
    let vm = new bitvm.VM(bitvm_code, memory);
    let result_snapshot = vm.run();
-   console.log(process.argv[2] + " result code: " + result_snapshot.read(tmp()));
+   console.log(process.argv[2] + " result code: " + result_snapshot.read(tmp()) + " " + result_snapshot.read(reg2mem(28)));
 }
 
 transpile(fs.readFileSync(process.argv[2])).catch((err) => {
