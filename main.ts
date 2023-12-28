@@ -233,23 +233,6 @@ function emitEBREAK(opcodes: BitVMOpcode[]) {
      if (rd != 0) 
        bitVM_ADDI(reg2mem(rd), tmp(), 0)
    
-   risc-v SRL rd, rs1, rs2
-     bitVM_ADDI(tmp(), reg2mem(rs1), 0) # result
-     bitVM_ADDI(tmp(), reg2mem(rs2), 0) # shift amount
-     
-     _SRL_UNIQ_loop_start:
-     # check if shift amount is zero
-     bitVM_BEQ(reg2mem(0), tmp(), sll_UNIQ_loop_end)
-     
-     # Call RSHIFT1
-     bitVM_RSHIFT1(tmp(), tmp())
-     bitVM_SUBI(tmp2(), tmp2(), 1)
-    
-     bitVM_BEQ(reg2mem(0), reg2mem(0), srl_UNIQ_loop_start)
-     
-     srl_UNIQ_loop_end:
-     if (rd != 0) 
-       bitVM_ADDI(reg2mem(rd), tmp(), 0)
 */
 
 function emitSRA(opcodes: BitVMOpcode[], rd: number, rs1: number, rs2: number) {
@@ -274,17 +257,60 @@ function emitSRA(opcodes: BitVMOpcode[], rd: number, rs1: number, rs2: number) {
     emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rd), tmp(), 0); // result
   }
 }
+
+function emitSRL(opcodes: BitVMOpcode[], rd: number, rs1: number, rs2: number) {
+  const uniq = crypto.randomBytes(32).toString("hex");
+  if (rd != 0) {
+    emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), 0); // result
+    emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp2(), reg2mem(rs2), 0); // shift amount
+    emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), tmp2(), 0x1F);
+
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_ADDI, reg2mem(0), reg2mem(0), 0), label: "_SRL_" + uniq + "_loop_start"});
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, reg2mem(0), tmp2(), 0), find_label: "_SRL_" + uniq + "_loop_end", find_target: "addressC" });
+    
+    emitBitvmOp(opcodes, bitvm.ASM_RSHIFT1, tmp(), tmp(), 0);
+    emitBitvmOp(opcodes, bitvm.ASM_SUBI, tmp2(), tmp2(), 1);
+    
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, reg2mem(0), reg2mem(0), 0), find_label: "_SRL_" + uniq + "_loop_start", find_target: "addressC" }); 
+ 
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_ADDI, reg2mem(0), reg2mem(0), 0), label: "_SRL_" + uniq + "_loop_end"});
+    
+    emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rd), tmp(), 0); // result
+  }
+}
+
+function emitSLL(opcodes: BitVMOpcode[], rd: number, rs1: number, rs2: number) {
+  const uniq = crypto.randomBytes(32).toString("hex");
+  if (rd != 0) {
+    emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), 0); // result
+    emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp2(), reg2mem(rs2), 0); // shift amount
+    emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), tmp2(), 0x1F);
+
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_ADDI, reg2mem(0), reg2mem(0), 0), label: "_SLL_" + uniq + "_loop_start"});
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, reg2mem(0), tmp2(), 0), find_label: "_SLL_" + uniq + "_loop_end", find_target: "addressC" });
+    
+    emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp(), tmp(), tmp());
+    emitBitvmOp(opcodes, bitvm.ASM_SUBI, tmp2(), tmp2(), 1);
+    
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, reg2mem(0), reg2mem(0), 0), find_label: "_SLL_" + uniq + "_loop_start", find_target: "addressC" }); 
+ 
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_ADDI, reg2mem(0), reg2mem(0), 0), label: "_SLL_" + uniq + "_loop_end"});
+    
+    emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rd), tmp(), 0); // result
+  }
+}
   
 function emitInstr(opcodes: BitVMOpcode[], pc: number, parsed: Instruction) {
   switch (parsed.instructionName) {
-    /* case "SLL":
+    case "SLL":
       emitSLL(
         opcodes,
         parsed.rd,
         parsed.rs1,
         parsed.rs2
-      ); */
-    /* case "SRL": {
+      );
+      break;
+    case "SRL": {
       emitSRL(
         opcodes,
         parsed.rd,
@@ -292,7 +318,7 @@ function emitInstr(opcodes: BitVMOpcode[], pc: number, parsed: Instruction) {
         parsed.rs2
       );
       break;
-    } */
+    }
     case "SLLI": {
        emitSLLI(
         opcodes,
