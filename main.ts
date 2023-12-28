@@ -178,22 +178,22 @@ function emitSLTI(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number) 
 
 function emitBLT(opcodes: BitVMOpcode[], rs1: number, rs2: number, imm: number, riscv_pc: number) {
     emitBitvmOp(opcodes, bitvm.ASM_SLT, tmp(), reg2mem(rs1), reg2mem(rs2));
-    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, tmp(), reg2mem(0), 0), find_label: "_riscv_pc_" + ((riscv_pc + imm) & 0xFFFFFFFF), find_target: "addressC"});
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BNE, tmp(), reg2mem(0), 0), find_label: "_riscv_pc_" + ((riscv_pc + imm) & 0xFFFFFFFF), find_target: "addressC"});
 }
 
 function emitBLTU(opcodes: BitVMOpcode[], rs1: number, rs2: number, imm: number, riscv_pc: number) {
     emitBitvmOp(opcodes, bitvm.ASM_SLTU, tmp(), reg2mem(rs1), reg2mem(rs2));
-    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, tmp(), reg2mem(0), 0), find_label: "_riscv_pc_ " + ((riscv_pc + imm) & 0xFFFFFFFF), find_target: "addressC"});
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BNE, tmp(), reg2mem(0), 0), find_label: "_riscv_pc_" + ((riscv_pc + imm) & 0xFFFFFFFF), find_target: "addressC"});
 }
 
 function emitBGE(opcodes: BitVMOpcode[], rs1: number, rs2: number, imm: number, riscv_pc: number) {
     emitBitvmOp(opcodes, bitvm.ASM_SLT, tmp(), reg2mem(rs1), reg2mem(rs2));
-    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BNE, tmp(), reg2mem(0), 0), find_label: "_riscv_pc_" + ((riscv_pc + imm) & 0xFFFFFFFF), find_target: "addressC"});
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, tmp(), reg2mem(0), 0), find_label: "_riscv_pc_" + ((riscv_pc + imm) & 0xFFFFFFFF), find_target: "addressC"});
 }
 
 function emitBGEU(opcodes: BitVMOpcode[], rs1: number, rs2: number, imm: number, riscv_pc: number) {
     emitBitvmOp(opcodes, bitvm.ASM_SLTU, tmp(), reg2mem(rs1), reg2mem(rs2));
-    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BNE, tmp(), reg2mem(0), 0), find_label: "_riscv_pc_" + ((riscv_pc + imm) & 0xFFFFFFFF), find_target: "addressC"});
+    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, tmp(), reg2mem(0), 0), find_label: "_riscv_pc_" + ((riscv_pc + imm) & 0xFFFFFFFF), find_target: "addressC"});
 }
 
 function emitECALL(opcodes: BitVMOpcode[]) {
