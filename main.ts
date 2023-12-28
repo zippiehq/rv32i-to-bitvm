@@ -70,7 +70,7 @@ function emitAND(opcodes: BitVMOpcode[], rd: number, rs1: number, rs2: number) {
 
 function emitANDI(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number) {
    if (rd != 0) { 
-     emitBitvmOp(opcodes, bitvm.ASM_ANDI, reg2mem(rd), reg2mem(rs1), imm >>> 0);
+     emitBitvmOp(opcodes, bitvm.ASM_ANDI, reg2mem(rd), reg2mem(rs1), imm);
    }
 }
 
@@ -353,6 +353,7 @@ function emitInstr(opcodes: BitVMOpcode[], pc: number, parsed: Instruction) {
         parsed.rs1,
         parsed.rs2
       );
+      break;
     }
     case "XOR": {
       emitXOR(
@@ -361,6 +362,7 @@ function emitInstr(opcodes: BitVMOpcode[], pc: number, parsed: Instruction) {
         parsed.rs1,
         parsed.rs2
       );
+      break;
     }
     case "AND": {
       emitAND(
@@ -372,7 +374,8 @@ function emitInstr(opcodes: BitVMOpcode[], pc: number, parsed: Instruction) {
       break;
     }
     case "ORI": {
-      emitORI(
+      emitOR
+      (
         opcodes,
         parsed.rd,
         parsed.rs1,
