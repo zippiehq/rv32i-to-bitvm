@@ -139,7 +139,7 @@ const executeInstruction = (snapshot: Snapshot) => {
         case ASM_AND:
             snapshot.write(
                 snapshot.instruction.addressA,
-                (snapshot.read(snapshot.instruction.addressA) & snapshot.read(snapshot.instruction.addressB)) & 0xFFFFFFFF
+                (snapshot.read(snapshot.instruction.addressB) & snapshot.read(snapshot.instruction.addressC)) & 0xFFFFFFFF
             )
             snapshot.pc += 1
             break
@@ -182,6 +182,7 @@ const executeInstruction = (snapshot: Snapshot) => {
         case ASM_SYSCALL:
             console.log("syscall called")
             snapshot.pc += 1
+            break
         default:
             snapshot.pc += 1
             break

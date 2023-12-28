@@ -70,7 +70,7 @@ function emitAND(opcodes: BitVMOpcode[], rd: number, rs1: number, rs2: number) {
 
 function emitANDI(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number) {
    if (rd != 0) { 
-     emitBitvmOp(opcodes, bitvm.ASM_ANDI, reg2mem(rd), reg2mem(rs1), imm);
+     emitBitvmOp(opcodes, bitvm.ASM_ANDI, reg2mem(rd), reg2mem(rs1), imm >>> 0);
    }
 }
 
@@ -109,7 +109,7 @@ function emitAUIPC(opcodes: BitVMOpcode[], rd: number, imm: number, riscv_pc: nu
 
 function emitLUI(opcodes: BitVMOpcode[], rd: number, insn: number) {
    if (rd != 0) {
-     emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rd), reg2mem(0), ((insn & 0xfffff000) >>> 0) & 0xFFFFFFFF);
+     emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rd), reg2mem(0), ((insn & 0xfffff000) >>> 0));
    }
 }
 
@@ -135,6 +135,17 @@ function emitSRLI(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number) 
       emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rd), reg2mem(rs1), 0);
       for (let i = 0; i < imm; i++) {
        emitBitvmOp(opcodes, bitvm.ASM_RSHIFT1, reg2mem(rd), reg2mem(rd), 0);
+      }   
+    }
+}
+
+function emitSRAI(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number) {
+    if (rd != 0) {
+      emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rd), reg2mem(rs1), 0);
+      for (let i = 0; i < imm; i++) {
+       emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp3(), reg2mem(rd), 0x80000000);
+       emitBitvmOp(opcodes, bitvm.ASM_RSHIFT1, reg2mem(rd), reg2mem(rd), 0);
+       emitBitvmOp(opcodes, bitvm.ASM_OR, reg2mem(rd), reg2mem(rd), tmp3());
       }   
     }
 }
@@ -310,11 +321,10 @@ function emitInstr(opcodes: BitVMOpcode[], pc: number, parsed: Instruction) {
       emitSRA(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
       break;
     } */
-    /*
     case "SRAI": {
       emitSRAI(opcodes, parsed.rd, parsed.rs1, parsed.imm);
       break;
-    } */
+    }
     // arithmetic
     case "ADD": {
       emitADD(opcodes, parsed.rd, parsed.rs1, parsed.rs2);
