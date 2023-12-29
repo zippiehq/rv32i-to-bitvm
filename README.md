@@ -31,6 +31,8 @@ cd isa
 
 make XLEN=32 rv32ui
 
+cd ../..
+
 3. install npm dependendencies:
 
 yarn
