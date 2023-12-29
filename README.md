@@ -1,4 +1,4 @@
-**This is a (not very developer friendly) rv32i to BitVM (some mods to be done on BitVM bitcoin script side still!) transpiler **
+This is a (not very developer friendly) rv32i to BitVM (some mods to be done on BitVM bitcoin script side still!) transpiler
 
 Need: wget, node, npm, yarn, linux/ubuntu container
 
