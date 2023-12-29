@@ -94,10 +94,12 @@ function emitJAL(opcodes: BitVMOpcode[], rd: number, imm: number, riscv_pc: numb
 }
 
 function emitJALR(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number, riscv_pc: number) {
+   emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), imm);
+   emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp(), tmp(), 0xFFFFFFFE);
+   emitBitvmOp(opcodes, bitvm.ASM_LOAD, tmp(), tmp(), 0);
    if (rd != 0) {
      emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rd), reg2mem(0), riscv_pc + 4);
    }
-   emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), imm);
    emitBitvmOp(opcodes, bitvm.ASM_JMP, tmp(), 0, 0);
 }
 
@@ -583,10 +585,15 @@ async function transpile(fileContents: Buffer) {
 
    let memory = Array(16*1024*1024).fill(0);
    for (let i = 0; i < context.codepage.length; i += 4) {
-      for (let j = 0; j < assembly.length; j++) {
+      let j = 0;
+      for (; j < assembly.length; j++) {
           if (assembly[j].label == ("_riscv_pc_" + (context.code_addr + i))) {
              memory[context.code_addr + i] = assembly[j].pc;
+             break;
           }
+      }
+      if (j == assembly.length) {
+          throw "code without bitvm assembly"
       }
    }   
    

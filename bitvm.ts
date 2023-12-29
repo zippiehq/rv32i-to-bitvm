@@ -19,6 +19,7 @@ export const ASM_RSHIFT1 = 56
 export const ASM_SLTU = 57
 export const ASM_SLT = 58
 export const ASM_SYSCALL = 59
+export const ASM_LOAD = 60
 
 export const LOG_TRACE_LEN = 24 // TODO: this should be 32
 // Length of the trace
@@ -57,7 +58,8 @@ export class Instruction {
             "56": "ASM_RSHIFT1",
             "57": "ASM_SLTU",
             "58": "ASM_SLT",
-            "59": "ASM_SYSCALL"
+            "59": "ASM_SYSCALL",
+            "60": "ASM_LOAD"
         }
         let type = lookup["" + this.type];
         return `${type} ${this.addressA} ${this.addressB} ${this.addressC}`
@@ -99,7 +101,7 @@ const executeInstruction = (snapshot: Snapshot) => {
 /*    console.log(`PC: ${snapshot.pc},  Instruction: ${(snapshot.instruction+'').padEnd(9,' ')}`)
     for (let i = 0; i < 35; i++) {
         console.log('x' + i + " = " + (snapshot.read(i) >>> 0).toString(16));
-    }*/
+    } */
     switch (snapshot.instruction.type) {
         case ASM_ADD:
             snapshot.write(
@@ -203,6 +205,10 @@ const executeInstruction = (snapshot: Snapshot) => {
             snapshot.write(snapshot.instruction.addressA, snapshot.read(snapshot.instruction.addressB) < snapshot.read(snapshot.instruction.addressC) ? 1 : 0);
             snapshot.pc += 1
             break            
+        case ASM_LOAD:
+            snapshot.write(snapshot.instruction.addressA, snapshot.read(snapshot.read(snapshot.instruction.addressB))); 
+            snapshot.pc += 1
+            break;
         case ASM_SYSCALL:
             console.log("syscall called")
             snapshot.pc += 1
