@@ -93,6 +93,18 @@ function emitJAL(opcodes: BitVMOpcode[], rd: number, imm: number, riscv_pc: numb
    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, reg2mem(0), reg2mem(0), 0), find_label: "_riscv_pc_" + ((riscv_pc + imm) & 0xFFFFFFFF), find_target: "addressC"});
 }
 
+function emitLW(opcodes: BitVMOpcode[], rd: number, rs1: number, offset: number) {
+   if (rd != 0) {
+      emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), offset);
+      emitBitvmOp(opcodes, bitvm.ASM_LOAD, reg2mem(rd), tmp(), 0);
+    }
+}
+
+function emitSW(opcodes: BitVMOpcode[], rs1: number, rs2: number, offset: number) {
+    emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), offset);
+    emitBitvmOp(opcodes, bitvm.ASM_WRITE, reg2mem(rs2), tmp(), 0);
+}
+
 function emitJALR(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number, riscv_pc: number) {
    emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), imm);
    emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp(), tmp(), 0xFFFFFFFE);
@@ -304,6 +316,24 @@ function emitSLL(opcodes: BitVMOpcode[], rd: number, rs1: number, rs2: number) {
   
 function emitInstr(opcodes: BitVMOpcode[], pc: number, parsed: Instruction) {
   switch (parsed.instructionName) {
+    case "LW": {
+      emitLW(
+        opcodes,
+        parsed.rd,
+        parsed.rs1,
+        parsed.imm
+      );
+      break;
+    }
+    case "SW": {
+      emitSW(
+        opcodes,
+        parsed.rs1,
+        parsed.rs2,
+        parsed.imm
+      );
+      break;
+    }
     case "SLL":
       emitSLL(
         opcodes,
@@ -598,7 +628,7 @@ async function transpile(fileContents: Buffer) {
    }   
    
    for (let i = 0; i < context.datapage.length; i += 4) {
-       memory[context.data_addr + i] = context.datapage.readUInt32LE(i);
+       memory[context.data_addr + i] = context.datapage.readInt32LE(i);
    }
    let bitvm_code: bitvm.Instruction[] = [];
    for (let i = 0; i < assembly.length; i++) {

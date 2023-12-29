@@ -20,6 +20,7 @@ export const ASM_SLTU = 57
 export const ASM_SLT = 58
 export const ASM_SYSCALL = 59
 export const ASM_LOAD = 60
+export const ASM_WRITE = 61
 
 export const LOG_TRACE_LEN = 24 // TODO: this should be 32
 // Length of the trace
@@ -207,6 +208,10 @@ const executeInstruction = (snapshot: Snapshot) => {
             break            
         case ASM_LOAD:
             snapshot.write(snapshot.instruction.addressA, snapshot.read(snapshot.read(snapshot.instruction.addressB))); 
+            snapshot.pc += 1
+            break;
+        case ASM_WRITE:
+            snapshot.write(snapshot.read(snapshot.instruction.addressB), snapshot.read(snapshot.instruction.addressA)); 
             snapshot.pc += 1
             break;
         case ASM_SYSCALL:
