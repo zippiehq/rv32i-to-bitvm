@@ -93,14 +93,130 @@ function emitJAL(opcodes: BitVMOpcode[], rd: number, imm: number, riscv_pc: numb
    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, reg2mem(0), reg2mem(0), 0), find_label: "_riscv_pc_" + ((riscv_pc + imm) & 0xFFFFFFFF), find_target: "addressC"});
 }
 
+function emitLBU(opcodes: BitVMOpcode[], rd: number, rs1: number, offset: number) {
+   if (rd != 0) {
+      emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), offset);
+      emitBitvmOp(opcodes, bitvm.ASM_LOAD, reg2mem(rd), tmp(), 0);
+      emitBitvmOp(opcodes, bitvm.ASM_ANDI, reg2mem(rd), reg2mem(rd), 0xFF); // just to be sure someone didn't sneak in a uint32 value instead of a bit
+  }
+}
+
+function emitLHU(opcodes: BitVMOpcode[], rd: number, rs1: number, offset: number) {
+   if (rd != 0) {
+      emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), offset);
+      emitBitvmOp(opcodes, bitvm.ASM_LOAD, reg2mem(rd), tmp(), 0);
+      emitBitvmOp(opcodes, bitvm.ASM_ANDI, reg2mem(rd), reg2mem(rd), 0xFF); // just to be sure someone didn't sneak in a uint32 value instead of a bit
+
+      // next
+      emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), tmp(), 1);
+      emitBitvmOp(opcodes, bitvm.ASM_LOAD, tmp2(), tmp(), 0);
+      emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), tmp2(), 0xFF); // just to be sure someone didn't sneak in a uint32 value instead of a byte
+
+      // shift 8 
+      for (let i = 0; i < 8; i++) {
+          emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp2(), tmp2(), tmp2());
+      } 
+
+      emitBitvmOp(opcodes, bitvm.ASM_OR, reg2mem(rd), reg2mem(rd), tmp2());
+  }
+}
+
 function emitLW(opcodes: BitVMOpcode[], rd: number, rs1: number, offset: number) {
    if (rd != 0) {
       emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), offset);
       emitBitvmOp(opcodes, bitvm.ASM_LOAD, reg2mem(rd), tmp(), 0);
+      emitBitvmOp(opcodes, bitvm.ASM_ANDI, reg2mem(rd), reg2mem(rd), 0xFF); // just to be sure someone didn't sneak in a uint32 value instead of a bit
+      
+      // next
+      emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), tmp(), 1);
+      emitBitvmOp(opcodes, bitvm.ASM_LOAD, tmp2(), tmp(), 0);
+      emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), tmp2(), 0xFF); // just to be sure someone didn't sneak in a uint32 value instead of a byte
+
+      // shift 8 
+      for (let i = 0; i < 8; i++) {
+          emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp2(), tmp2(), tmp2());
+      } 
+
+      emitBitvmOp(opcodes, bitvm.ASM_OR, reg2mem(rd), reg2mem(rd), tmp2());
+
+      emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), tmp(), 1);
+      emitBitvmOp(opcodes, bitvm.ASM_LOAD, tmp2(), tmp(), 0);
+      emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), tmp2(), 0xFF); // just to be sure someone didn't sneak in a uint32 value instead of a byte
+
+      // shift 16
+      for (let i = 0; i < 16; i++) {
+          emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp2(), tmp2(), tmp2());
+      } 
+      emitBitvmOp(opcodes, bitvm.ASM_OR, reg2mem(rd), reg2mem(rd), tmp2());    
+    
+      emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), tmp(), 1);
+      emitBitvmOp(opcodes, bitvm.ASM_LOAD, tmp2(), tmp(), 0);
+      emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), tmp2(), 0xFF); // just to be sure someone didn't sneak in a uint32 value instead of a byte
+
+      // shift 24
+      for (let i = 0; i < 24; i++) {
+          emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp2(), tmp2(), tmp2());
+      } 
+      emitBitvmOp(opcodes, bitvm.ASM_OR, reg2mem(rd), reg2mem(rd), tmp2());    
     }
 }
 
 function emitSW(opcodes: BitVMOpcode[], rs1: number, rs2: number, offset: number) {
+    emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), offset);
+    emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp2(), reg2mem(rs2), 0);
+
+    // first byte
+    emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), tmp2(), 0xFF);
+    emitBitvmOp(opcodes, bitvm.ASM_WRITE, tmp2(), tmp(), 0);
+
+    // second byte
+    emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), tmp(), 1);
+
+    emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp2(), reg2mem(rs2), 0);
+    // shift right 8
+    for (let i = 0; i < 8; i++) {
+      emitBitvmOp(opcodes, bitvm.ASM_RSHIFT1, tmp2(), tmp2(), tmp2());
+    }
+    emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), tmp2(), 0xFF);
+    emitBitvmOp(opcodes, bitvm.ASM_WRITE, tmp2(), tmp(), 0);
+
+    // third byte
+    emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), tmp(), 1);
+
+    emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp2(), reg2mem(rs2), 0);
+    // shift right 16
+    for (let i = 0; i < 16; i++) {
+      emitBitvmOp(opcodes, bitvm.ASM_RSHIFT1, tmp2(), tmp2(), tmp2());
+    }
+    emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), tmp2(), 0xFF);
+
+    emitBitvmOp(opcodes, bitvm.ASM_WRITE, tmp2(), tmp(), 0);
+
+   
+    // fourth byte
+    emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), tmp(), 1);
+    emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp2(), reg2mem(rs2), 0);
+
+    // shift right 24
+    for (let i = 0; i < 24; i++) {
+      emitBitvmOp(opcodes, bitvm.ASM_RSHIFT1, tmp2(), tmp2(), tmp2());
+    }
+    emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), tmp2(), 0xFF);
+
+    emitBitvmOp(opcodes, bitvm.ASM_WRITE, tmp2(), tmp(), 0);
+}
+
+function emitSB(opcodes: BitVMOpcode[], rs1: number, rs2: number, offset: number) {
+    emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp2(), reg2mem(rs1), offset);
+
+    emitBitvmOp(opcodes, bitvm.ASM_LOAD, tmp3(), tmp2(), 0); // get the previous value in
+    
+    
+    
+    emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp(), reg2mem(rs2), 0xFF);
+    
+    
+
     emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), offset);
     emitBitvmOp(opcodes, bitvm.ASM_WRITE, reg2mem(rs2), tmp(), 0);
 }
@@ -223,32 +339,6 @@ function emitEBREAK(opcodes: BitVMOpcode[]) {
     opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, reg2mem(0), reg2mem(0), 0), find_label: "_program_end", find_target: "addressC"});
 }
 
-
-
-/*
-  transpilations:
-
-  risc-v SLL rd, rs1, rs2
-     bitVM_ADDI(tmp(), reg2mem(rs1), 0) # result
-     bitVM_ADDI(tmp(), reg2mem(rs2), 0) # shift amount
-     
-     _SLL_UNIQ_loop_start:
-     # check if shift amount is zero
-     bitVM_BEQ(reg2mem(0), tmp(), sll_UNIQ_loop_end)
-     
-     # Double the value by adding it to itself
-
-     bitVM_ADD(tmp(), tmp(),  tmp())
-     bitVM_SUBI(tmp2(), tmp2(), 1)
-    
-     bitVM_BEQ(reg2mem(0), reg2mem(0), sll_UNIQ_loop_start)
-     
-     sll_UNIQ_loop_end:
-     if (rd != 0) 
-       bitVM_ADDI(reg2mem(rd), tmp(), 0)
-   
-*/
-
 function emitSRA(opcodes: BitVMOpcode[], rd: number, rs1: number, rs2: number) {
   const uniq = crypto.randomBytes(32).toString("hex");
   if (rd != 0) {
@@ -318,6 +408,24 @@ function emitInstr(opcodes: BitVMOpcode[], pc: number, parsed: Instruction) {
   switch (parsed.instructionName) {
     case "LW": {
       emitLW(
+        opcodes,
+        parsed.rd,
+        parsed.rs1,
+        parsed.imm
+      );
+      break;
+    }
+    case "LBU": {
+      emitLBU(
+        opcodes,
+        parsed.rd,
+        parsed.rs1,
+        parsed.imm
+      );
+      break;
+    }
+    case "LHU": {
+      emitLHU(
         opcodes,
         parsed.rd,
         parsed.rs1,
@@ -627,8 +735,9 @@ async function transpile(fileContents: Buffer) {
       }
    }   
    
-   for (let i = 0; i < context.datapage.length; i += 4) {
-       memory[context.data_addr + i] = context.datapage.readInt32LE(i);
+   // XXX switch to uint8
+   for (let i = 0; i < context.datapage.length; i += 1) {
+       memory[context.data_addr + i] = context.datapage.readUInt8(i);
    }
    let bitvm_code: bitvm.Instruction[] = [];
    for (let i = 0; i < assembly.length; i++) {

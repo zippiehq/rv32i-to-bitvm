@@ -60,7 +60,8 @@ export class Instruction {
             "57": "ASM_SLTU",
             "58": "ASM_SLT",
             "59": "ASM_SYSCALL",
-            "60": "ASM_LOAD"
+            "60": "ASM_LOAD",
+            "61": "ASM_WRITE"
         }
         let type = lookup["" + this.type];
         return `${type} ${this.addressA} ${this.addressB} ${this.addressC}`
@@ -99,9 +100,9 @@ class Snapshot {
 }
 
 const executeInstruction = (snapshot: Snapshot) => {
-/*    console.log(`PC: ${snapshot.pc},  Instruction: ${(snapshot.instruction+'').padEnd(9,' ')}`)
+    /*  console.log(`PC: ${snapshot.pc},  Instruction: ${(snapshot.instruction+'').padEnd(9,' ')}`)
     for (let i = 0; i < 35; i++) {
-        console.log('x' + i + " = " + (snapshot.read(i) >>> 0).toString(16));
+      console.log('x' + i + " = " + (snapshot.read(i) >>> 0).toString(16));
     } */
     switch (snapshot.instruction.type) {
         case ASM_ADD:
