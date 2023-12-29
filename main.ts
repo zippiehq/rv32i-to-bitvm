@@ -464,7 +464,7 @@ function emitSLL(opcodes: BitVMOpcode[], rd: number, rs1: number, rs2: number) {
   }
 }
   
-function emitInstr(opcodes: BitVMOpcode[], pc: number, parsed: Instruction) {
+function emitInstr(opcodes: BitVMOpcode[], pc: number, parsed: Instruction, rawInstr: number) {
   switch (parsed.instructionName) {
     case "LW": {
       emitLW(
@@ -712,11 +712,14 @@ function emitInstr(opcodes: BitVMOpcode[], pc: number, parsed: Instruction) {
     case "EBREAK":
       emitEBREAK(opcodes);
       break;
+    case "UNKNOWN":
+      console.log("Got unknown opcode, ignoring, pc = 0x" + pc.toString(16));;
+      break;
     case "ECALL":
       emitECALL(opcodes);
       break;
     default:
-      throw new Error("Unknown instruction: " + parsed.instructionName);
+      throw new Error("Unknown instruction: " + parsed.instructionName + " " + JSON.stringify(parsed) + " " + rawInstr.toString(16) + " pc = 0x" + pc.toString(16));
   }
 }
 
@@ -730,7 +733,7 @@ function riscvToBitVM(pc_base: number, buf: Buffer): BitVMOpcode[] {
 
     // null-op for labels
     opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_ADDI, reg2mem(0), reg2mem(0), 0), label: "_riscv_pc_" + (pc_base + i), comment: JSON.stringify(parsed) });    
-    emitInstr(opcodes, pc_base + i, parsed);
+    emitInstr(opcodes, pc_base + i, parsed, instr);
   }
   opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_ADDI, reg2mem(0), reg2mem(0), 0), label: "_program_end"});
   return opcodes;

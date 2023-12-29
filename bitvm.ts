@@ -241,6 +241,9 @@ export class VM {
             snapshot.instruction = this.program[snapshot.pc]
             executeInstruction(snapshot)
             snapshot.stepCount++
+            if (snapshot.stepCount == maxSteps) {
+               throw "hit max steps"
+            }
         }
         return snapshot
     }
