@@ -107,22 +107,22 @@ const executeInstruction = (snapshot: Snapshot) => {
     switch (snapshot.instruction.type) {
         case ASM_ADD:
             snapshot.write(
-                snapshot.instruction.addressA,
-                (snapshot.read(snapshot.instruction.addressB) + snapshot.read(snapshot.instruction.addressC)) & 0xFFFFFFFF
+                snapshot.instruction.addressC,
+                (snapshot.read(snapshot.instruction.addressA) + snapshot.read(snapshot.instruction.addressB)) & 0xFFFFFFFF
             )
             snapshot.pc += 1
             break
         case ASM_SUB:
             snapshot.write(
-                snapshot.instruction.addressA,
-                (snapshot.read(snapshot.instruction.addressB) - snapshot.read(snapshot.instruction.addressC)) & 0xFFFFFFFF
+                snapshot.instruction.addressC,
+                (snapshot.read(snapshot.instruction.addressA) - snapshot.read(snapshot.instruction.addressB)) & 0xFFFFFFFF
             )
             snapshot.pc += 1
             break
         case ASM_XOR:
             snapshot.write(
-                snapshot.instruction.addressA,
-                (snapshot.read(snapshot.instruction.addressB) ^ snapshot.read(snapshot.instruction.addressC)) & 0xFFFFFFFF
+                snapshot.instruction.addressC,
+                (snapshot.read(snapshot.instruction.addressA) ^ snapshot.read(snapshot.instruction.addressB)) & 0xFFFFFFFF
             )
             snapshot.pc += 1
             break
@@ -145,74 +145,74 @@ const executeInstruction = (snapshot: Snapshot) => {
             break
         case ASM_ADDI:
             snapshot.write(
-                snapshot.instruction.addressA,
-                (snapshot.read(snapshot.instruction.addressB) + snapshot.instruction.addressC) & 0xFFFFFFFF
+                snapshot.instruction.addressC,
+                (snapshot.read(snapshot.instruction.addressA) + snapshot.instruction.addressB) & 0xFFFFFFFF
             )
             snapshot.pc += 1
             break
         case ASM_SUBI:
             snapshot.write(
-                snapshot.instruction.addressA,
-                (snapshot.read(snapshot.instruction.addressB) - snapshot.instruction.addressC) & 0xFFFFFFFF
+                snapshot.instruction.addressC,
+                (snapshot.read(snapshot.instruction.addressA) - snapshot.instruction.addressB) & 0xFFFFFFFF
             )
             snapshot.pc += 1
             break
         case ASM_XORI:
             snapshot.write(
-                snapshot.instruction.addressA,
-                (snapshot.read(snapshot.instruction.addressB) ^ snapshot.instruction.addressC) & 0xFFFFFFFF
+                snapshot.instruction.addressC,
+                (snapshot.read(snapshot.instruction.addressA) ^ snapshot.instruction.addressB) & 0xFFFFFFFF
             )
             snapshot.pc += 1
             break
         case ASM_AND:
             snapshot.write(
-                snapshot.instruction.addressA,
-                (snapshot.read(snapshot.instruction.addressB) & snapshot.read(snapshot.instruction.addressC)) & 0xFFFFFFFF
+                snapshot.instruction.addressC,
+                (snapshot.read(snapshot.instruction.addressA) & snapshot.read(snapshot.instruction.addressB)) & 0xFFFFFFFF
             )
             snapshot.pc += 1
             break
         case ASM_OR:
             snapshot.write(
-                snapshot.instruction.addressA,
-                (snapshot.read(snapshot.instruction.addressB) | snapshot.read(snapshot.instruction.addressC)) & 0xFFFFFFFF
+                snapshot.instruction.addressC,
+                (snapshot.read(snapshot.instruction.addressA) | snapshot.read(snapshot.instruction.addressB)) & 0xFFFFFFFF
             )
             snapshot.pc += 1
             break
         case ASM_ANDI:
             snapshot.write(
-                snapshot.instruction.addressA,
-                (snapshot.read(snapshot.instruction.addressB) & snapshot.instruction.addressC) & 0xFFFFFFFF
+                snapshot.instruction.addressC,
+                (snapshot.read(snapshot.instruction.addressA) & snapshot.instruction.addressB) & 0xFFFFFFFF
             )
             snapshot.pc += 1
             break
         case ASM_ORI:
             snapshot.write(
-                snapshot.instruction.addressA,
-                (snapshot.read(snapshot.instruction.addressB) | snapshot.instruction.addressC) & 0xFFFFFFFF
+                snapshot.instruction.addressC,
+                (snapshot.read(snapshot.instruction.addressA) | snapshot.instruction.addressB) & 0xFFFFFFFF
             )
             snapshot.pc += 1
             break
         case ASM_RSHIFT1:
             snapshot.write(
-                snapshot.instruction.addressA,
-                (snapshot.read(snapshot.instruction.addressB) >>> 1) & 0xFFFFFFFF
+                snapshot.instruction.addressC,
+                (snapshot.read(snapshot.instruction.addressA) >>> 1) & 0xFFFFFFFF
             )
             snapshot.pc += 1
             break
         case ASM_SLTU:
-            snapshot.write(snapshot.instruction.addressA, snapshot.read(snapshot.instruction.addressB) >>> 0 < snapshot.read(snapshot.instruction.addressC) >>> 0 ? 1 : 0);
+            snapshot.write(snapshot.instruction.addressC, snapshot.read(snapshot.instruction.addressA) >>> 0 < snapshot.read(snapshot.instruction.addressB) >>> 0 ? 1 : 0);
             snapshot.pc += 1
             break            
         case ASM_SLT:
-            snapshot.write(snapshot.instruction.addressA, snapshot.read(snapshot.instruction.addressB) < snapshot.read(snapshot.instruction.addressC) ? 1 : 0);
+            snapshot.write(snapshot.instruction.addressC, snapshot.read(snapshot.instruction.addressA) < snapshot.read(snapshot.instruction.addressB) ? 1 : 0);
             snapshot.pc += 1
             break            
         case ASM_LOAD:
-            snapshot.write(snapshot.instruction.addressA, snapshot.read(snapshot.read(snapshot.instruction.addressB))); 
+            snapshot.write(snapshot.instruction.addressC, snapshot.read(snapshot.read(snapshot.instruction.addressA))); 
             snapshot.pc += 1
             break;
         case ASM_WRITE:
-            snapshot.write(snapshot.read(snapshot.instruction.addressB), snapshot.read(snapshot.instruction.addressA)); 
+            snapshot.write(snapshot.read(snapshot.instruction.addressC), snapshot.read(snapshot.instruction.addressA)); 
             snapshot.pc += 1
             break;
         case ASM_SYSCALL:
