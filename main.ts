@@ -252,12 +252,11 @@ function emitSW(opcodes: BitVMOpcode[], rs1: number, rs2: number, offset: number
     for (let i = 0; i < 8; i++) {
       emitBitvmOp(opcodes, bitvm.ASM_RSHIFT1, tmp2(), tmp2(), tmp2());
     }
-
     emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), 0xFF, tmp2());
     emitBitvmOp(opcodes, bitvm.ASM_WRITE, tmp2(), 0, tmp());
 
     // third byte
-    emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), tmp(), 1);
+    emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), 1, tmp());
 
     emitBitvmOp(opcodes, bitvm.ASM_ADD, reg2mem(rs2), 0, tmp2());
     // shift right 16
@@ -267,17 +266,15 @@ function emitSW(opcodes: BitVMOpcode[], rs1: number, rs2: number, offset: number
     emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), 0xFF, tmp2());
     emitBitvmOp(opcodes, bitvm.ASM_WRITE, tmp2(), 0, tmp());
 
-   
     // fourth byte
     emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), 1, tmp());
-    emitBitvmOp(opcodes, bitvm.ASM_ADD, reg2mem(rs2), 0, tmp2());
 
+    emitBitvmOp(opcodes, bitvm.ASM_ADD, reg2mem(rs2), 0, tmp2());
     // shift right 24
     for (let i = 0; i < 24; i++) {
       emitBitvmOp(opcodes, bitvm.ASM_RSHIFT1, tmp2(), tmp2(), tmp2());
     }
     emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), 0xFF, tmp2());
-
     emitBitvmOp(opcodes, bitvm.ASM_WRITE, tmp2(), 0, tmp());
 }
 
@@ -305,7 +302,7 @@ function emitLUI(opcodes: BitVMOpcode[], rd: number, insn: number) {
 }
 
 function emitBEQ(opcodes: BitVMOpcode[], rs1: number, rs2: number, imm: number, riscv_pc: number) {
-   opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, reg2mem(rs1), reg2mem(rs2), 0,), find_label: "_riscv_pc_" + ((riscv_pc + imm) & 0xFFFFFFFF), find_target: "addressC"});
+   opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BEQ, reg2mem(rs1), reg2mem(rs2), 0), find_label: "_riscv_pc_" + ((riscv_pc + imm) & 0xFFFFFFFF), find_target: "addressC"});
 }
 
 function emitBNE(opcodes: BitVMOpcode[], rs1: number, rs2: number, imm: number, riscv_pc: number) {
