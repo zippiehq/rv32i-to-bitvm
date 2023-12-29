@@ -101,6 +101,35 @@ function emitLBU(opcodes: BitVMOpcode[], rd: number, rs1: number, offset: number
   }
 }
 
+function emitLH(opcodes: BitVMOpcode[], rd: number, rs1: number, offset: number) {
+   if (rd != 0) {
+      emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), offset);
+      emitBitvmOp(opcodes, bitvm.ASM_LOAD, reg2mem(rd), tmp(), 0);
+      emitBitvmOp(opcodes, bitvm.ASM_ANDI, reg2mem(rd), reg2mem(rd), 0xFF); // just to be sure someone didn't sneak in a uint32 value instead of a bit
+
+      // next
+      emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), tmp(), 1);
+      emitBitvmOp(opcodes, bitvm.ASM_LOAD, tmp2(), tmp(), 0);
+      emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), tmp2(), 0xFF); // just to be sure someone didn't sneak in a uint32 value instead of a byte
+
+      // shift 8 
+      for (let i = 0; i < 8; i++) {
+          emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp2(), tmp2(), tmp2());
+      } 
+
+      emitBitvmOp(opcodes, bitvm.ASM_OR, reg2mem(rd), reg2mem(rd), tmp2());
+
+      emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp(), reg2mem(rd), 0x8000); // get MSB
+      emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp(), tmp(), tmp()); // lshift
+      
+      for (let i = 0; i < 16; i++) {
+          // sign-extend up to 24
+          emitBitvmOp(opcodes, bitvm.ASM_OR, reg2mem(rd), reg2mem(rd), tmp());
+          emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp(), tmp(), tmp()); // lshift
+      }
+  }
+}
+
 function emitLB(opcodes: BitVMOpcode[], rd: number, rs1: number, offset: number) {
    if (rd != 0) {
       emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), offset);
@@ -457,6 +486,15 @@ function emitInstr(opcodes: BitVMOpcode[], pc: number, parsed: Instruction) {
     }
     case "LB": {
       emitLB(
+        opcodes,
+        parsed.rd,
+        parsed.rs1,
+        parsed.imm
+      );
+      break;
+    }
+    case "LH": {
+      emitLH(
         opcodes,
         parsed.rd,
         parsed.rs1,
