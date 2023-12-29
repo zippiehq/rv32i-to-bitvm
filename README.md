@@ -4,9 +4,10 @@ Need: wget, node, npm, yarn, linux/ubuntu container
 0. Clone this repo:
 
 git clone https://github.com/zippiehq/rv32i-to-bitvm
+
 cd rv32i-to-bitvm
 
-1. Get a toolchain:
+1. Get a toolchain: (still in rv32i-to-bitvm/ )
 
 wget https://github.com/stnolting/riscv-gcc-prebuilt/releases/download/rv32i-4.0.0/riscv32-unknown-elf.gcc-12.1.0.tar.gz
 
