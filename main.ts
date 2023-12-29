@@ -101,6 +101,23 @@ function emitLBU(opcodes: BitVMOpcode[], rd: number, rs1: number, offset: number
   }
 }
 
+function emitLB(opcodes: BitVMOpcode[], rd: number, rs1: number, offset: number) {
+   if (rd != 0) {
+      emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), offset);
+      emitBitvmOp(opcodes, bitvm.ASM_LOAD, reg2mem(rd), tmp(), 0);
+      emitBitvmOp(opcodes, bitvm.ASM_ANDI, reg2mem(rd), reg2mem(rd), 0xFF); // just to be sure someone didn't sneak in a uint32 value instead of a bit
+      emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp(), reg2mem(rd), 0x80); // get MSB
+      emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp(), tmp(), tmp()); // lshift
+      
+      for (let i = 0; i < 24; i++) {
+          // sign-extend up to 24
+          emitBitvmOp(opcodes, bitvm.ASM_OR, reg2mem(rd), reg2mem(rd), tmp());
+          emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp(), tmp(), tmp()); // lshift
+      }
+  }
+}
+
+
 function emitLHU(opcodes: BitVMOpcode[], rd: number, rs1: number, offset: number) {
    if (rd != 0) {
       emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), offset);
@@ -161,6 +178,35 @@ function emitLW(opcodes: BitVMOpcode[], rd: number, rs1: number, offset: number)
     }
 }
 
+function emitSB(opcodes: BitVMOpcode[], rs1: number, rs2: number, offset: number) {
+    emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), offset);
+    emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp2(), reg2mem(rs2), 0);
+
+    // first byte
+    emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), tmp2(), 0xFF);
+    emitBitvmOp(opcodes, bitvm.ASM_WRITE, tmp2(), tmp(), 0);
+}
+
+function emitSH(opcodes: BitVMOpcode[], rs1: number, rs2: number, offset: number) {
+    emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), offset);
+    emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp2(), reg2mem(rs2), 0);
+
+    // first byte
+    emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), tmp2(), 0xFF);
+    emitBitvmOp(opcodes, bitvm.ASM_WRITE, tmp2(), tmp(), 0);
+
+    // second byte
+    emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), tmp(), 1);
+
+    emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp2(), reg2mem(rs2), 0);
+    // shift right 8
+    for (let i = 0; i < 8; i++) {
+      emitBitvmOp(opcodes, bitvm.ASM_RSHIFT1, tmp2(), tmp2(), tmp2());
+    }
+    emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), tmp2(), 0xFF);
+    emitBitvmOp(opcodes, bitvm.ASM_WRITE, tmp2(), tmp(), 0);
+}
+
 function emitSW(opcodes: BitVMOpcode[], rs1: number, rs2: number, offset: number) {
     emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), offset);
     emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp2(), reg2mem(rs2), 0);
@@ -204,21 +250,6 @@ function emitSW(opcodes: BitVMOpcode[], rs1: number, rs2: number, offset: number
     emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), tmp2(), 0xFF);
 
     emitBitvmOp(opcodes, bitvm.ASM_WRITE, tmp2(), tmp(), 0);
-}
-
-function emitSB(opcodes: BitVMOpcode[], rs1: number, rs2: number, offset: number) {
-    emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp2(), reg2mem(rs1), offset);
-
-    emitBitvmOp(opcodes, bitvm.ASM_LOAD, tmp3(), tmp2(), 0); // get the previous value in
-    
-    
-    
-    emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp(), reg2mem(rs2), 0xFF);
-    
-    
-
-    emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), reg2mem(rs1), offset);
-    emitBitvmOp(opcodes, bitvm.ASM_WRITE, reg2mem(rs2), tmp(), 0);
 }
 
 function emitJALR(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number, riscv_pc: number) {
@@ -424,6 +455,15 @@ function emitInstr(opcodes: BitVMOpcode[], pc: number, parsed: Instruction) {
       );
       break;
     }
+    case "LB": {
+      emitLB(
+        opcodes,
+        parsed.rd,
+        parsed.rs1,
+        parsed.imm
+      );
+      break;
+    }
     case "LHU": {
       emitLHU(
         opcodes,
@@ -435,6 +475,24 @@ function emitInstr(opcodes: BitVMOpcode[], pc: number, parsed: Instruction) {
     }
     case "SW": {
       emitSW(
+        opcodes,
+        parsed.rs1,
+        parsed.rs2,
+        parsed.imm
+      );
+      break;
+    }
+    case "SB": {
+      emitSB(
+        opcodes,
+        parsed.rs1,
+        parsed.rs2,
+        parsed.imm
+      );
+      break;
+    }
+    case "SH": {
+      emitSH(
         opcodes,
         parsed.rs1,
         parsed.rs2,
