@@ -21,12 +21,12 @@ export interface BitVMOpcode {
 }
 
 function reg2mem(reg: number) {
-   return reg; // in future, * 4   
+   return reg * 4; // in future, * 4   
 }
 
-function tmp() { return 33; }
-function tmp2() { return 34; }
-function tmp3() { return 35; }
+function tmp() { return 33*4; }
+function tmp2() { return 34*4; }
+function tmp3() { return 35*4; }
 
 function emitBitvmOp(opcodes: BitVMOpcode[], op: number, addressA: number, addressB: number, addressC: number) {
    opcodes.push({ opcode: new bitvm.Instruction(op, addressA, addressB, addressC) });
@@ -817,12 +817,12 @@ async function transpile(fileContents: Buffer) {
    }
 //   console.log(assembly)
 
-   let memory = Array(16*1024*1024).fill(0);
+   let memory = Buffer.alloc(4*1024*1024*1024, 0);
    for (let i = 0; i < context.codepage.length; i += 4) {
       let j = 0;
       for (; j < assembly.length; j++) {
           if (assembly[j].label == ("_riscv_pc_" + (context.code_addr + i))) {
-             memory[context.code_addr + i] = assembly[j].pc;
+             memory.writeUInt32LE(assembly[j].pc as number, context.code_addr + i);
              break;
           }
       }
@@ -833,7 +833,7 @@ async function transpile(fileContents: Buffer) {
    
    // XXX switch to uint8
    for (let i = 0; i < context.datapage.length; i += 1) {
-       memory[context.data_addr + i] = context.datapage.readUInt8(i);
+       memory.writeUInt8(context.datapage.readUInt8(i), context.data_addr + i);
    }
    let bitvm_code: bitvm.Instruction[] = [];
    for (let i = 0; i < assembly.length; i++) {

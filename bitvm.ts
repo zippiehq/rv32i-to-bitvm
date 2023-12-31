@@ -72,11 +72,11 @@ export class Instruction {
 
 class Snapshot {
     pc: number
-    memory: number[]
+    memory: Buffer
     stepCount = 0
     instruction: Instruction
 
-    constructor(memory: number[], instruction: Instruction, pc = 0) {
+    constructor(memory: Buffer, instruction: Instruction, pc = 0) {
         this.memory = memory
         this.instruction = instruction
         this.pc = pc
@@ -87,7 +87,7 @@ class Snapshot {
             throw `ERROR: address=${address} is negative`
         if(address >= this.memory.length) 
             throw `ERROR: address=${address} >= memory.length=${this.memory.length}`
-        return this.memory[address]
+        return this.memory.readInt32LE(address);
     }
 
     write(address: number, value: number) {
@@ -95,7 +95,23 @@ class Snapshot {
             throw `ERROR: address=${address} is negative`
         if(address >= this.memory.length) 
             throw `ERROR: address=${address} >= memory.length=${this.memory.length}`
-        this.memory[address] = value
+        this.memory.writeInt32LE(value, address);
+    }
+
+    readByte(address: number): number {
+        if(address < 0) 
+            throw `ERROR: address=${address} is negative`
+        if(address >= this.memory.length) 
+            throw `ERROR: address=${address} >= memory.length=${this.memory.length}`
+        return this.memory.readUint8(address);
+    }
+
+    writeByte(address: number, value: number) {
+        if(address < 0) 
+            throw `ERROR: address=${address} is negative`
+        if(address >= this.memory.length) 
+            throw `ERROR: address=${address} >= memory.length=${this.memory.length}`
+        this.memory.writeUint8(value, address);
     }
 }
 
@@ -208,11 +224,11 @@ const executeInstruction = (snapshot: Snapshot) => {
             snapshot.pc += 1
             break            
         case ASM_LOAD:
-            snapshot.write(snapshot.instruction.addressC, snapshot.read(snapshot.read(snapshot.instruction.addressA))); 
+            snapshot.write(snapshot.instruction.addressC, snapshot.readByte(snapshot.read(snapshot.instruction.addressA))); 
             snapshot.pc += 1
             break;
         case ASM_WRITE:
-            snapshot.write(snapshot.read(snapshot.instruction.addressC), snapshot.read(snapshot.instruction.addressA)); 
+            snapshot.writeByte(snapshot.read(snapshot.instruction.addressC), snapshot.readByte(snapshot.instruction.addressA)); 
             snapshot.pc += 1
             break;
         case ASM_SYSCALL:
@@ -229,7 +245,7 @@ export class VM {
     program
     memoryEntries
 
-    constructor(program: Instruction[], memoryEntries: number[]) {
+    constructor(program: Instruction[], memoryEntries: Buffer) {
         this.program = program,
         this.memoryEntries = memoryEntries
     }
