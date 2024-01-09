@@ -1,26 +1,24 @@
-
-export const ASM_ADD = 42 // *aC = (*aA + *aB) & (2^32-1)
-export const ASM_SUB = 43 // *aC = (*aA + *aB) & (2^32-1)
-//export const ASM_MUL = 44
-export const ASM_JMP = 45 // pc = *aA
-export const ASM_BEQ = 46 // if *aA == *aB: pc = aC
-export const ASM_BNE = 47 // if *aA != *aB: pc = aC
-
-// new
-export const ASM_ADDI = 48 // *aC = (*aA + aB) & (2^32-1)
-export const ASM_SUBI = 49 // *aC = (*aA - aB) & (2^32-1)
-export const ASM_XORI = 50 // *aC = (*aA ^ aB) ^ (2^32-1)
-export const ASM_XOR = 51  // *aC = (*aA ^ *aB) ^ (2^32-1)
-export const ASM_OR = 52 // *aC = (*aA | *aB) ^ (2^32-1)
-export const ASM_AND = 53 // *aC = (*aA & *aB) ^ (2^32-1)
-export const ASM_ANDI = 54
-export const ASM_ORI = 55
-export const ASM_RSHIFT1 = 56
-export const ASM_SLTU = 57
-export const ASM_SLT = 58
-export const ASM_SYSCALL = 59
-export const ASM_LOAD = 60
-export const ASM_WRITE = 61
+// BitVM instruction set
+export const ASM_ADD	 = 1
+export const ASM_SUB	 = 2
+export const ASM_MUL	 = 3
+export const ASM_AND	 = 4
+export const ASM_OR 	 = 5
+export const ASM_XOR	 = 6
+export const ASM_ADDI	 = 7
+export const ASM_SUBI	 = 8
+export const ASM_ANDI	 = 9
+export const ASM_ORI	 = 10
+export const ASM_XORI	 = 11
+export const ASM_JMP	 = 12
+export const ASM_BEQ	 = 13
+export const ASM_BNE	 = 14
+export const ASM_RSHIFT1 = 15
+export const ASM_SLTU	 = 16
+export const ASM_SLT	 = 17
+export const ASM_SYSCALL = 18
+export const ASM_LOAD	 = 19
+export const ASM_STORE	 = 20
 
 export const LOG_TRACE_LEN = 24 // TODO: this should be 32
 // Length of the trace
@@ -42,32 +40,31 @@ export class Instruction {
 
     toString() {
         let lookup: Record<string, string> = {
-            "42": "ASM_ADD",
-            "43": "ASM_SUB",
-            "44": "ASM_MUL",
-            "45": "ASM_JMP",
-            "46": "ASM_BEQ", 
-            "47": "ASM_BNE",
-            "48": "ASM_ADDI",
-            "49": "ASM_SUBI",
-            "50": "ASM_XORI",
-            "51": "ASM_XOR",
-            "52": "ASM_OR",
-            "53": "ASM_AND",
-            "54": "ASM_ANDI",
-            "55": "ASM_ORI",
-            "56": "ASM_RSHIFT1",
-            "57": "ASM_SLTU",
-            "58": "ASM_SLT",
-            "59": "ASM_SYSCALL",
-            "60": "ASM_LOAD",
-            "61": "ASM_WRITE"
+            "1"  : "ASM_ADD",
+            "2"  : "ASM_SUB",
+            "3"  : "ASM_MUL",
+            "4"  : "ASM_AND",
+            "5"  : "ASM_OR",
+            "6"  : "ASM_XOR",
+            "7"  : "ASM_ADDI",
+            "8"  : "ASM_SUBI",
+            "9"  : "ASM_ANDI",
+            "10" : "ASM_ORI",
+            "11" : "ASM_XORI",
+            "12" : "ASM_JMP",
+            "13" : "ASM_BEQ",
+            "14" : "ASM_BNE",
+            "15" : "ASM_RSHIFT1",
+            "16" : "ASM_SLTU",
+            "17" : "ASM_SLT",
+            "18" : "ASM_SYSCALL",
+            "19" : "ASM_LOAD",
+            "20" : "ASM_STORE",
         }
         let type = lookup["" + this.type];
         return `${type} ${this.addressA} ${this.addressB} ${this.addressC}`
     }
 }
-
 //export const compileProgram = source => source.map(instruction => new Instruction(...instruction))
 
 class Snapshot {
@@ -96,22 +93,6 @@ class Snapshot {
         if(address >= this.memory.length) 
             throw `ERROR: address=${address} >= memory.length=${this.memory.length}`
         this.memory.writeInt32LE(value, address);
-    }
-
-    readByte(address: number): number {
-        if(address < 0) 
-            throw `ERROR: address=${address} is negative`
-        if(address >= this.memory.length) 
-            throw `ERROR: address=${address} >= memory.length=${this.memory.length}`
-        return this.memory.readUint8(address);
-    }
-
-    writeByte(address: number, value: number) {
-        if(address < 0) 
-            throw `ERROR: address=${address} is negative`
-        if(address >= this.memory.length) 
-            throw `ERROR: address=${address} >= memory.length=${this.memory.length}`
-        this.memory.writeUint8(value, address);
     }
 }
 
@@ -224,11 +205,13 @@ const executeInstruction = (snapshot: Snapshot) => {
             snapshot.pc += 1
             break            
         case ASM_LOAD:
-            snapshot.write(snapshot.instruction.addressC, snapshot.readByte(snapshot.read(snapshot.instruction.addressA))); 
+            snapshot.instruction.addressA = snapshot.read(snapshot.instruction.addressB)
+            snapshot.write(snapshot.instruction.addressC, snapshot.read(snapshot.instruction.addressA))
             snapshot.pc += 1
-            break;
-        case ASM_WRITE:
-            snapshot.writeByte(snapshot.read(snapshot.instruction.addressC), snapshot.readByte(snapshot.instruction.addressA)); 
+            break
+        case ASM_STORE:
+            snapshot.instruction.addressC = snapshot.read(snapshot.instruction.addressB)
+            snapshot.write(snapshot.instruction.addressC, snapshot.read(snapshot.instruction.addressA)); 
             snapshot.pc += 1
             break;
         case ASM_SYSCALL:
