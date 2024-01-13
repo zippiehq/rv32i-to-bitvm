@@ -69,11 +69,11 @@ export class Instruction {
 
 class Snapshot {
     pc: number
-    memory: Buffer
+    memory: number[]
     stepCount = 0
     instruction: Instruction
 
-    constructor(memory: Buffer, instruction: Instruction, pc = 0) {
+    constructor(memory: number[], instruction: Instruction, pc = 0) {
         this.memory = memory
         this.instruction = instruction
         this.pc = pc
@@ -84,7 +84,7 @@ class Snapshot {
             throw `ERROR: address=${address} is negative`
         if(address >= this.memory.length) 
             throw `ERROR: address=${address} >= memory.length=${this.memory.length}`
-        return this.memory.readInt32LE(address);
+        return this.memory[address];
     }
 
     write(address: number, value: number) {
@@ -92,7 +92,7 @@ class Snapshot {
             throw `ERROR: address=${address} is negative`
         if(address >= this.memory.length) 
             throw `ERROR: address=${address} >= memory.length=${this.memory.length}`
-        this.memory.writeInt32LE(value, address);
+        this.memory[address] = value;
     }
 }
 
@@ -228,7 +228,7 @@ export class VM {
     program
     memoryEntries
 
-    constructor(program: Instruction[], memoryEntries: Buffer) {
+    constructor(program: Instruction[], memoryEntries: number[]) {
         this.program = program,
         this.memoryEntries = memoryEntries
     }

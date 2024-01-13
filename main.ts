@@ -818,12 +818,12 @@ async function transpile(fileContents: Buffer) {
    }
    //   console.log(assembly)
 
-   let memory = Buffer.alloc(4 * 1024 * 1024 * 1024, 0);
+   let memory = Array(1024 * 1024 * 1024);
    for (let i = 0; i < context.codepage.length; i += 4) {
       let j = 0;
       for (; j < assembly.length; j++) {
          if (assembly[j].label == ("_riscv_pc_" + (context.code_addr + i))) {
-            memory.writeUInt32LE(assembly[j].pc as number, context.code_addr + i);
+            memory[context.code_addr] = assembly[j].pc as number;
             break;
          }
       }
@@ -834,13 +834,12 @@ async function transpile(fileContents: Buffer) {
 
    // XXX switch to uint8
    for (let i = 0; i < context.datapage.length; i += 1) {
-      memory.writeUInt8(context.datapage.readUInt8(i), context.data_addr + i);
+      memory[context.data_addr + i] = context.datapage.readUInt8(i) as number;
    }
    let bitvm_code: bitvm.Instruction[] = [];
    for (let i = 0; i < assembly.length; i++) {
       bitvm_code.push(assembly[i].opcode);
    }
-
    let vm = new bitvm.VM(bitvm_code, memory);
    let result_snapshot = vm.run();
    console.log(process.argv[2] + " result code: " + result_snapshot.read(tmp()) + " " + result_snapshot.read(reg2mem(28)));
