@@ -208,7 +208,7 @@ function emitLW(opcodes: BitVMOpcode[], rd: number, rs1: number, offset: number)
    }
 }
 
-function emitSB(opcodes: BitVMOpcode[], rs2: number, rs1: number, offset: number) {
+function emitSB(opcodes: BitVMOpcode[], rs1: number, rs2: number, offset: number) {
     emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rs1), offset, tmp());
     emitBitvmOp(opcodes, bitvm.ASM_ADD, reg2mem(rs2), 0, tmp2());
 
@@ -818,7 +818,7 @@ async function transpile(fileContents: Buffer) {
    }
    //   console.log(assembly)
 
-   let memory = Array(1024 * 1024 * 1024);
+   let memory = Array(1024 * 1024).fill(0);
    for (let i = 0; i < context.codepage.length; i += 4) {
       let j = 0;
       for (; j < assembly.length; j++) {

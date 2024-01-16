@@ -206,11 +206,13 @@ const executeInstruction = (snapshot: Snapshot) => {
             break            
         case ASM_LOAD:
             snapshot.instruction.addressA = snapshot.read(snapshot.instruction.addressB)
+            // console.log(`Loading value: ${snapshot.read(snapshot.instruction.addressA)} from address ${snapshot.instruction.addressA } to address ${ snapshot.instruction.addressC}`);
             snapshot.write(snapshot.instruction.addressC, snapshot.read(snapshot.instruction.addressA))
             snapshot.pc += 1
             break
         case ASM_STORE:
             snapshot.instruction.addressC = snapshot.read(snapshot.instruction.addressB)
+            // console.log(`Loading value: ${snapshot.read(snapshot.instruction.addressA)} from address ${snapshot.instruction.addressA } to address ${ snapshot.instruction.addressC}`);
             snapshot.write(snapshot.instruction.addressC, snapshot.read(snapshot.instruction.addressA)); 
             snapshot.pc += 1
             break;
