@@ -282,7 +282,7 @@ function emitSW(opcodes: BitVMOpcode[], rs1: number, rs2: number, offset: number
 function emitJALR(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number, riscv_pc: number) {
    emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rs1), imm, tmp());
    emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp(), 0xFFFFFFFE, tmp());
-   emitBitvmOp(opcodes, bitvm.ASM_LOAD, tmp(), 0, tmp());
+   emitBitvmOp(opcodes, bitvm.ASM_LOAD, NaN, tmp(), tmp());
    if (rd != 0) {
       emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(0), riscv_pc + 4, reg2mem(rd));
    }
@@ -823,7 +823,7 @@ async function transpile(fileContents: Buffer) {
       let j = 0;
       for (; j < assembly.length; j++) {
          if (assembly[j].label == ("_riscv_pc_" + (context.code_addr + i))) {
-            memory[context.code_addr] = assembly[j].pc as number;
+            memory[context.code_addr + i] = assembly[j].pc as number;
             break;
          }
       }
