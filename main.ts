@@ -138,13 +138,13 @@ function emitLB(opcodes: BitVMOpcode[], rd: number, rs1: number, offset: number)
       emitBitvmOp(opcodes, bitvm.ASM_ANDI, reg2mem(rd), 0xFF, reg2mem(rd));
       emitBitvmOp(opcodes, bitvm.ASM_ANDI, reg2mem(rd), 0x80, tmp()); // get MSB
       emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp(), tmp(), tmp()); // lshift
-      
+
       for (let i = 0; i < 24; i++) {
-          // sign-extend up to 24
-          emitBitvmOp(opcodes, bitvm.ASM_OR, reg2mem(rd), tmp(), reg2mem(rd));
-          emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp(), tmp(), tmp()); // lshift
+         // sign-extend up to 24
+         emitBitvmOp(opcodes, bitvm.ASM_OR, reg2mem(rd), tmp(), reg2mem(rd));
+         emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp(), tmp(), tmp()); // lshift
       }
-  }
+   }
 }
 
 
@@ -209,12 +209,12 @@ function emitLW(opcodes: BitVMOpcode[], rd: number, rs1: number, offset: number)
 }
 
 function emitSB(opcodes: BitVMOpcode[], rs1: number, rs2: number, offset: number) {
-    emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rs1), offset, tmp());
-    emitBitvmOp(opcodes, bitvm.ASM_ADD, reg2mem(rs2), 0, tmp2());
+   emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rs1), offset, tmp());
+   emitBitvmOp(opcodes, bitvm.ASM_ADD, reg2mem(rs2), 0, tmp2());
 
-    // first byte
-    emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), 0xFF, tmp2());
-    emitBitvmOp(opcodes, bitvm.ASM_STORE, tmp2(), tmp(), NaN);
+   // first byte
+   emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), 0xFF, tmp2());
+   emitBitvmOp(opcodes, bitvm.ASM_STORE, tmp2(), tmp(), NaN);
 }
 
 function emitSH(opcodes: BitVMOpcode[], rs1: number, rs2: number, offset: number) {
@@ -710,6 +710,9 @@ function emitInstr(opcodes: BitVMOpcode[], pc: number, parsed: Instruction, rawI
       case "EBREAK":
          emitEBREAK(opcodes);
          break;
+      case "CSRRW":
+         emitEBREAK(opcodes);
+         break;
       case "UNKNOWN":
          console.log("Got unknown opcode, ignoring, pc = 0x" + pc.toString(16));;
          break;
@@ -792,44 +795,51 @@ async function transpile(fileContents: Buffer) {
    for (let i = 0; i < assembly.length; i++) {
       assembly[i].pc = i;
    }
-   for (let i = 0; i < assembly.length; i++) {
-      if (assembly[i].find_label) {
-         let j = 0;
-         for (; j < assembly.length; j++) {
-            if (assembly[j].label === assembly[i].find_label) {
-               break;
-            }
-         }
-         if (j == assembly.length) {
-            throw "label not found " + assembly[i].find_label;
-         }
+   const labelMap = new Map();
+   assembly.forEach((a, i) => {
+      if (!labelMap.has(a.label)) {
+         labelMap.set(a.label, i);
+      }
+   });
 
-         if (assembly[j].pc === undefined) {
+   assembly.forEach(a => {
+      if (a.find_label) {
+         const j = labelMap.get(a.find_label);
+         if (j === undefined) {
+            throw "label not found " + a.find_label;
+         }
+         const pc = assembly[j].pc;
+         if (pc === undefined) {
             throw "No PC!";
          }
-         if (assembly[i].find_target === "addressA") {
-            assembly[i].opcode.addressA = assembly[j].pc as number
-         } else if (assembly[i].find_target === "addressB") {
-            assembly[i].opcode.addressB = assembly[j].pc as number
-         } else if (assembly[i].find_target === "addressC") {
-            assembly[i].opcode.addressC = assembly[j].pc as number
-         } else throw "Unknown find_target " + assembly[i].find_target;
+
+         switch (a.find_target) {
+            case "addressA":
+               a.opcode.addressA = pc;
+               break;
+            case "addressB":
+               a.opcode.addressB = pc;
+               break;
+            case "addressC":
+               a.opcode.addressC = pc;
+               break;
+            default:
+               throw "Unknown find_target " + a.find_target;
+         }
       }
-   }
+   });
+
    //   console.log(assembly)
 
    let memory = Array(1024 * 1024).fill(0);
+   const assemblyMap = new Map(assembly.map(a => [a.label, a.pc as number]));
    for (let i = 0; i < context.codepage.length; i += 4) {
-      let j = 0;
-      for (; j < assembly.length; j++) {
-         if (assembly[j].label == ("_riscv_pc_" + (context.code_addr + i))) {
-            memory[context.code_addr + i] = assembly[j].pc as number;
-            break;
-         }
+      const label = "_riscv_pc_" + (context.code_addr + i);
+      const pc = assemblyMap.get(label);
+      if (pc === undefined) {
+         throw "code without bitvm assembly";
       }
-      if (j == assembly.length) {
-         throw "code without bitvm assembly"
-      }
+      memory[context.code_addr + i] = pc;
    }
 
    // XXX switch to uint8
