@@ -790,7 +790,6 @@ async function transpile(fileContents: Buffer) {
          context.data_addr = Number(seg.vaddr)
       }
    }
-   console.log("CONVERTING TO ASSEMBLY");
    let assembly = riscvToBitVM(context.code_addr, context.codepage);
    // assign program counters
    for (let i = 0; i < assembly.length; i++) {
@@ -842,7 +841,6 @@ async function transpile(fileContents: Buffer) {
       }
       memory[context.code_addr + i] = pc;
    }
-   console.log("This part done as well");
 
    // XXX switch to uint8
    for (let i = 0; i < context.datapage.length; i += 1) {
