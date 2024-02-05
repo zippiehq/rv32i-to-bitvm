@@ -24,6 +24,12 @@ export const LOG_TRACE_LEN = 24 // TODO: this should be 32
 // Length of the trace
 export const TRACE_LEN = 2 ** LOG_TRACE_LEN
 
+export const U32_SIZE = 2 ** 32
+// Map positive and negative n to an unsigned u32
+export const toU32 = (n: number): number => {
+    return (U32_SIZE + (n % U32_SIZE)) % U32_SIZE;
+}
+
 export class Instruction {
     type: number;
     addressA: number;
@@ -96,135 +102,145 @@ class Snapshot {
     }
 }
 
-const executeInstruction = (snapshot: Snapshot) => {
+const executeInstruction = (s: Snapshot) => {
     /*  console.log(`PC: ${snapshot.pc},  Instruction: ${(snapshot.instruction+'').padEnd(9,' ')}`)
     for (let i = 0; i < 35; i++) {
       console.log('x' + i + " = " + (snapshot.read(i) >>> 0).toString(16));
     } */
-    switch (snapshot.instruction.type) {
+    switch (s.instruction.type) {
         case ASM_ADD:
-            snapshot.write(
-                snapshot.instruction.addressC,
-                (snapshot.read(snapshot.instruction.addressA) + snapshot.read(snapshot.instruction.addressB)) & 0xFFFFFFFF
+            s.write(
+                s.instruction.addressC,
+                toU32(s.read(s.instruction.addressA) + s.read(s.instruction.addressB))
             )
-            snapshot.pc += 1
+            s.pc += 1
             break
         case ASM_SUB:
-            snapshot.write(
-                snapshot.instruction.addressC,
-                (snapshot.read(snapshot.instruction.addressA) - snapshot.read(snapshot.instruction.addressB)) & 0xFFFFFFFF
+            s.write(
+                s.instruction.addressC,
+                toU32(s.read(s.instruction.addressA) - s.read(s.instruction.addressB))
             )
-            snapshot.pc += 1
+            s.pc += 1
+            break
+        case ASM_MUL:
+            s.write(
+                s.instruction.addressC,
+                toU32(s.read(s.instruction.addressA) * s.read(s.instruction.addressB))
+            )
+            s.pc += 1
+            break
+        case ASM_AND:
+            s.write(
+                s.instruction.addressC,
+                toU32(s.read(s.instruction.addressA) & s.read(s.instruction.addressB))
+            )
+            s.pc += 1
+            break
+        case ASM_OR:
+            s.write(
+                s.instruction.addressC,
+                toU32(s.read(s.instruction.addressA) | s.read(s.instruction.addressB))
+            )
+            s.pc += 1
             break
         case ASM_XOR:
-            snapshot.write(
-                snapshot.instruction.addressC,
-                (snapshot.read(snapshot.instruction.addressA) ^ snapshot.read(snapshot.instruction.addressB)) & 0xFFFFFFFF
+            s.write(
+                s.instruction.addressC,
+                toU32(s.read(s.instruction.addressA) ^ s.read(s.instruction.addressB))
             )
-            snapshot.pc += 1
+            s.pc += 1
+            break
+        case ASM_ADDI:
+            s.write(
+                s.instruction.addressC,
+                toU32(s.read(s.instruction.addressA) + s.instruction.addressB)
+            )
+            s.pc += 1
+            break
+        case ASM_SUBI:
+            s.write(
+                s.instruction.addressC,
+                toU32(s.read(s.instruction.addressA) - s.instruction.addressB)
+            )
+            s.pc += 1
+            break
+        case ASM_ANDI:
+            s.write(
+                s.instruction.addressC,
+                toU32(s.read(s.instruction.addressA) & s.instruction.addressB)
+            )
+            s.pc += 1
+            break
+        case ASM_ORI:
+            s.write(
+                s.instruction.addressC,
+                toU32(s.read(s.instruction.addressA) | s.instruction.addressB)
+            )
+            s.pc += 1
+            break
+        case ASM_XORI:
+            s.write(
+                s.instruction.addressC,
+                toU32(s.read(s.instruction.addressA) ^ s.instruction.addressB)
+            )
+            s.pc += 1
             break
         case ASM_BEQ:
-            if (snapshot.read(snapshot.instruction.addressA) == snapshot.read(snapshot.instruction.addressB)) {
-                snapshot.pc = snapshot.instruction.addressC
+            if (s.read(s.instruction.addressA) == s.read(s.instruction.addressB)) {
+                s.pc = s.instruction.addressC
             } else {
-                snapshot.pc += 1
+                s.pc += 1
             }
             break
         case ASM_BNE:
-            if (snapshot.read(snapshot.instruction.addressA) != snapshot.read(snapshot.instruction.addressB)) {
-                snapshot.pc = snapshot.instruction.addressC
+            if (s.read(s.instruction.addressA) != s.read(s.instruction.addressB)) {
+                s.pc = s.instruction.addressC
             } else {
-                snapshot.pc += 1
+                s.pc += 1
             }
             break
         case ASM_JMP:
-            snapshot.pc = snapshot.read(snapshot.instruction.addressA)
-            break
-        case ASM_ADDI:
-            snapshot.write(
-                snapshot.instruction.addressC,
-                (snapshot.read(snapshot.instruction.addressA) + snapshot.instruction.addressB) & 0xFFFFFFFF
-            )
-            snapshot.pc += 1
-            break
-        case ASM_SUBI:
-            snapshot.write(
-                snapshot.instruction.addressC,
-                (snapshot.read(snapshot.instruction.addressA) - snapshot.instruction.addressB) & 0xFFFFFFFF
-            )
-            snapshot.pc += 1
-            break
-        case ASM_XORI:
-            snapshot.write(
-                snapshot.instruction.addressC,
-                (snapshot.read(snapshot.instruction.addressA) ^ snapshot.instruction.addressB) & 0xFFFFFFFF
-            )
-            snapshot.pc += 1
-            break
-        case ASM_AND:
-            snapshot.write(
-                snapshot.instruction.addressC,
-                (snapshot.read(snapshot.instruction.addressA) & snapshot.read(snapshot.instruction.addressB)) & 0xFFFFFFFF
-            )
-            snapshot.pc += 1
-            break
-        case ASM_OR:
-            snapshot.write(
-                snapshot.instruction.addressC,
-                (snapshot.read(snapshot.instruction.addressA) | snapshot.read(snapshot.instruction.addressB)) & 0xFFFFFFFF
-            )
-            snapshot.pc += 1
-            break
-        case ASM_ANDI:
-            snapshot.write(
-                snapshot.instruction.addressC,
-                (snapshot.read(snapshot.instruction.addressA) & snapshot.instruction.addressB) & 0xFFFFFFFF
-            )
-            snapshot.pc += 1
-            break
-        case ASM_ORI:
-            snapshot.write(
-                snapshot.instruction.addressC,
-                (snapshot.read(snapshot.instruction.addressA) | snapshot.instruction.addressB) & 0xFFFFFFFF
-            )
-            snapshot.pc += 1
+            s.pc = s.read(s.instruction.addressA)
             break
         case ASM_RSHIFT1:
-            snapshot.write(
-                snapshot.instruction.addressC,
-                (snapshot.read(snapshot.instruction.addressA) >>> 1) & 0xFFFFFFFF
+            s.write(
+                s.instruction.addressC,
+                toU32(s.read(s.instruction.addressA) >>> 1)
             )
-            snapshot.pc += 1
+            s.pc += 1
             break
         case ASM_SLTU:
-            snapshot.write(snapshot.instruction.addressC, snapshot.read(snapshot.instruction.addressA) >>> 0 < snapshot.read(snapshot.instruction.addressB) >>> 0 ? 1 : 0);
-            snapshot.pc += 1
+            s.write(s.instruction.addressC, s.read(s.instruction.addressA) >>> 0 < s.read(s.instruction.addressB) >>> 0 ? 1 : 0);
+            s.pc += 1
             break            
         case ASM_SLT:
-            snapshot.write(snapshot.instruction.addressC, snapshot.read(snapshot.instruction.addressA) < snapshot.read(snapshot.instruction.addressB) ? 1 : 0);
-            snapshot.pc += 1
-            break            
+            // Binary OR with each value to cast them to 32-bit integer and then back to a sign-extended number.
+            s.write(s.instruction.addressC, (s.read(s.instruction.addressA) | 0 ) < ( s.read(s.instruction.addressB) | 0 ) ? 1 : 0);
+            s.pc += 1
+            break
         case ASM_LOAD:
-            snapshot.instruction.addressA = snapshot.read(snapshot.instruction.addressB)
+            s.instruction.addressA = s.read(s.instruction.addressB)
             // console.log(`Loading value: ${snapshot.read(snapshot.instruction.addressA)} from address ${snapshot.instruction.addressA } to address ${ snapshot.instruction.addressC}`);
-            snapshot.write(snapshot.instruction.addressC, snapshot.read(snapshot.instruction.addressA))
-            snapshot.pc += 1
+            s.write(s.instruction.addressC, s.read(s.instruction.addressA))
+            s.pc += 1
             break
         case ASM_STORE:
-            snapshot.instruction.addressC = snapshot.read(snapshot.instruction.addressB)
+            s.instruction.addressC = s.read(s.instruction.addressB)
             // console.log(`Loading value: ${snapshot.read(snapshot.instruction.addressA)} from address ${snapshot.instruction.addressA } to address ${ snapshot.instruction.addressC}`);
-            snapshot.write(snapshot.instruction.addressC, snapshot.read(snapshot.instruction.addressA)); 
-            snapshot.pc += 1
+            s.write(s.instruction.addressC, s.read(s.instruction.addressA))
+            s.pc += 1
             break;
         case ASM_SYSCALL:
             console.log("syscall called")
-            snapshot.pc += 1
+            s.pc += 1
             break
         default:
-            snapshot.pc += 1
-            break
+            throw `Unsupported instruction type ${s.instruction.type}`
+            // s.pc += 1
+            // break
     }
 }
+
 
 export class VM {
     program
