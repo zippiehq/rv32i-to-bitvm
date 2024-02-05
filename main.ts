@@ -831,7 +831,7 @@ async function transpile(fileContents: Buffer) {
 
    //   console.log(assembly)
 
-   let memory = Array(1024 * 1024).fill(0);
+   let memory = Array(1024 * 1024 * 16).fill(0);
    const assemblyMap = new Map(assembly.map(a => [a.label, a.pc as number]));
    for (let i = 0; i < context.codepage.length; i += 4) {
       const label = "_riscv_pc_" + (context.code_addr + i);
