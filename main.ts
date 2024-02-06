@@ -20,6 +20,14 @@ export interface BitVMOpcode {
    comment?: string;
 }
 
+export interface Context {
+   codepage: Buffer;
+   code_addr: number;
+   datapage: Buffer[];
+   data_addr: number[];
+}
+
+
 function reg2mem(reg: number) {
    return reg * 4; // in future, * 4   
 }
@@ -756,11 +764,11 @@ async function transpile(fileContents: Buffer) {
       throw new Error("No ELF");
    }
 
-   let context = {
+   let context: Context = {
       codepage: Buffer.alloc(0),
       code_addr: 0,
-      datapage: Buffer.alloc(0),
-      data_addr: 0
+      datapage: [],
+      data_addr: []
    }
 
    for (let i = 0; i < elfInfo.elf.segments.length; i++) {
@@ -786,8 +794,8 @@ async function transpile(fileContents: Buffer) {
             throw new Error("Segment should be 4K-aligned");
          }
          const data = fileContents.slice(seg.offset, seg.offset + seg.filesz);
-         context.datapage = data;
-         context.data_addr = Number(seg.vaddr)
+         context.datapage.push(data);
+         context.data_addr.push(Number(seg.vaddr))
       }
    }
    let assembly = riscvToBitVM(context.code_addr, context.codepage);
@@ -843,8 +851,10 @@ async function transpile(fileContents: Buffer) {
    }
 
    // XXX switch to uint8
-   for (let i = 0; i < context.datapage.length; i += 1) {
-      memory[context.data_addr + i] = context.datapage.readUInt8(i) as number;
+   for(let i = 0; i < context.datapage.length; i++){
+      for (let j = 0; j < context.datapage[i].length; j += 1) {
+         memory[context.data_addr[i] + j] = context.datapage[i].readUInt8(j) as number;
+      }
    }
    let bitvm_code: bitvm.Instruction[] = [];
    for (let i = 0; i < assembly.length; i++) {
