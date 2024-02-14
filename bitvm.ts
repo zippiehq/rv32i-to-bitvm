@@ -19,8 +19,10 @@ export const ASM_SLT	 = 17
 export const ASM_SYSCALL = 18
 export const ASM_LOAD	 = 19
 export const ASM_STORE	 = 20
+export const ASM_RSHIFT8 = 21;
+export const ASM_LSHIFT8 = 22;
 
-export const LOG_TRACE_LEN = 24 // TODO: this should be 32
+export const LOG_TRACE_LEN = 32 // TODO: this should be 32
 // Length of the trace
 export const TRACE_LEN = 2 ** LOG_TRACE_LEN
 
@@ -66,6 +68,8 @@ export class Instruction {
             "18" : "ASM_SYSCALL",
             "19" : "ASM_LOAD",
             "20" : "ASM_STORE",
+            "21" : "ASM_RSHIFT8",
+            "22" : "ASM_LSHIFT8",
         }
         let type = lookup["" + this.type];
         return `${type} ${this.addressA} ${this.addressB} ${this.addressC}`
@@ -209,6 +213,20 @@ const executeInstruction = (s: Snapshot) => {
             )
             s.pc += 1
             break
+        case ASM_RSHIFT8:
+            s.write(
+                s.instruction.addressC,
+                toU32(s.read(s.instruction.addressA) >>> 8)
+            )
+            s.pc += 1
+            break
+        case ASM_LSHIFT8:
+                s.write(
+                    s.instruction.addressC,
+                    toU32(s.read(s.instruction.addressA) << 8)
+                );
+                s.pc += 1;
+                break;            
         case ASM_SLTU:
             s.write(s.instruction.addressC, s.read(s.instruction.addressA) >>> 0 < s.read(s.instruction.addressB) >>> 0 ? 1 : 0);
             s.pc += 1
@@ -256,12 +274,17 @@ export class VM {
         const snapshot = new Snapshot(this.memoryEntries, this.program[0])
         while (snapshot.pc < this.program.length && snapshot.stepCount < maxSteps) {
             snapshot.instruction = this.program[snapshot.pc]
+            if(snapshot.instruction.type == ASM_ADDI && snapshot.instruction.addressA == 0 && snapshot.instruction.addressB == 0 && snapshot.instruction.addressC == 0){
+                snapshot.pc++;
+                continue;
+            }
             executeInstruction(snapshot)
             snapshot.stepCount++
             if (snapshot.stepCount == maxSteps) {
                throw "hit max steps"
             }
         }
+        console.log("Step count = ", snapshot.stepCount);
         return snapshot
     }
 }

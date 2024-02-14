@@ -121,8 +121,8 @@ function emitLH(opcodes: BitVMOpcode[], rd: number, rs1: number, offset: number)
       emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), 0xFF, tmp2()); // just to be sure someone didn't sneak in a uint32 value instead of a byte
 
       // shift 8 
-      for (let i = 0; i < 8; i++) {
-         emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp2(), tmp2(), tmp2());
+      for (let i = 0; i < 1; i++) {
+         emitBitvmOp(opcodes, bitvm.ASM_LSHIFT8, tmp2(), tmp2(), tmp2());
       }
 
       emitBitvmOp(opcodes, bitvm.ASM_OR, reg2mem(rd), tmp2(), reg2mem(rd));
@@ -130,11 +130,8 @@ function emitLH(opcodes: BitVMOpcode[], rd: number, rs1: number, offset: number)
       emitBitvmOp(opcodes, bitvm.ASM_ANDI, reg2mem(rd), 0x8000, tmp()); // get MSB
       emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp(), tmp(), tmp()); // lshift
 
-      for (let i = 0; i < 16; i++) {
-         // sign-extend up to 24
-         emitBitvmOp(opcodes, bitvm.ASM_OR, reg2mem(rd), tmp(), reg2mem(rd));
-         emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp(), tmp(), tmp()); // lshift
-      }
+      emitBitvmOp(opcodes, bitvm.ASM_SUB, 0, tmp(), tmp()); // 
+      emitBitvmOp(opcodes, bitvm.ASM_OR, reg2mem(rd), tmp(), reg2mem(rd));
    }
 }
 
@@ -147,13 +144,11 @@ function emitLB(opcodes: BitVMOpcode[], rd: number, rs1: number, offset: number)
       emitBitvmOp(opcodes, bitvm.ASM_ANDI, reg2mem(rd), 0x80, tmp()); // get MSB
       emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp(), tmp(), tmp()); // lshift
 
-      for (let i = 0; i < 24; i++) {
-         // sign-extend up to 24
-         emitBitvmOp(opcodes, bitvm.ASM_OR, reg2mem(rd), tmp(), reg2mem(rd));
-         emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp(), tmp(), tmp()); // lshift
-      }
+      emitBitvmOp(opcodes, bitvm.ASM_SUB, 0, tmp(), tmp()); // 
+      emitBitvmOp(opcodes, bitvm.ASM_OR, reg2mem(rd), tmp(), reg2mem(rd));
    }
 }
+
 
 
 function emitLHU(opcodes: BitVMOpcode[], rd: number, rs1: number, offset: number) {
@@ -168,8 +163,8 @@ function emitLHU(opcodes: BitVMOpcode[], rd: number, rs1: number, offset: number
       emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), 0xFF, tmp2()); // just to be sure someone didn't sneak in a uint32 value instead of a byte
 
       // shift 8 
-      for (let i = 0; i < 8; i++) {
-         emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp2(), tmp2(), tmp2());
+      for (let i = 0; i < 1; i++) {
+         emitBitvmOp(opcodes, bitvm.ASM_LSHIFT8, tmp2(), tmp2(), tmp2());
       }
 
       emitBitvmOp(opcodes, bitvm.ASM_OR, reg2mem(rd), tmp2(), reg2mem(rd));
@@ -178,41 +173,19 @@ function emitLHU(opcodes: BitVMOpcode[], rd: number, rs1: number, offset: number
 
 function emitLW(opcodes: BitVMOpcode[], rd: number, rs1: number, offset: number) {
    if (rd != 0) {
-      emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rs1), offset, tmp());
+      emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rs1), offset + 3, tmp());
       emitBitvmOp(opcodes, bitvm.ASM_LOAD, NaN, tmp(), reg2mem(rd));
       emitBitvmOp(opcodes, bitvm.ASM_ANDI, reg2mem(rd), 0xFF, reg2mem(rd)); // just to be sure someone didn't sneak in a uint32 value instead of a bit
+      // continue from here
+      for(let i = 0; i < 3; i++){
+         emitBitvmOp(opcodes, bitvm.ASM_SUBI, tmp(), 1, tmp());
+         emitBitvmOp(opcodes, bitvm.ASM_LOAD, NaN, tmp(), tmp2());
 
-      // next
-      emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), 1, tmp());
-      emitBitvmOp(opcodes, bitvm.ASM_LOAD, NaN, tmp(), tmp2());;
-      emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), 0xFF, tmp2()); // just to be sure someone didn't sneak in a uint32 value instead of a byte
+         emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), 0xFF, tmp2()); // just to be sure someone didn't sneak in a uint32 value instead of a bit
 
-      // shift 8 
-      for (let i = 0; i < 8; i++) {
-         emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp2(), tmp2(), tmp2());
+         emitBitvmOp(opcodes, bitvm.ASM_LSHIFT8, reg2mem(rd), reg2mem(rd), reg2mem(rd));
+         emitBitvmOp(opcodes, bitvm.ASM_OR, reg2mem(rd), tmp2(), reg2mem(rd));
       }
-
-      emitBitvmOp(opcodes, bitvm.ASM_OR, reg2mem(rd), tmp2(), reg2mem(rd));
-
-      emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), 1, tmp());
-      emitBitvmOp(opcodes, bitvm.ASM_LOAD, NaN, tmp(), tmp2());;
-      emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), 0xFF, tmp2()); // just to be sure someone didn't sneak in a uint32 value instead of a byte
-
-      // shift 16
-      for (let i = 0; i < 16; i++) {
-         emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp2(), tmp2(), tmp2());
-      }
-      emitBitvmOp(opcodes, bitvm.ASM_OR, reg2mem(rd), tmp2(), reg2mem(rd));
-
-      emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), 1, tmp());
-      emitBitvmOp(opcodes, bitvm.ASM_LOAD, NaN, tmp(), tmp2());
-      emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), 0xFF, tmp2()); // just to be sure someone didn't sneak in a uint32 value instead of a byte
-
-      // shift 24
-      for (let i = 0; i < 24; i++) {
-         emitBitvmOp(opcodes, bitvm.ASM_ADD, tmp2(), tmp2(), tmp2());
-      }
-      emitBitvmOp(opcodes, bitvm.ASM_OR, reg2mem(rd), tmp2(), reg2mem(rd));
    }
 }
 
@@ -226,66 +199,45 @@ function emitSB(opcodes: BitVMOpcode[], rs1: number, rs2: number, offset: number
 }
 
 function emitSH(opcodes: BitVMOpcode[], rs1: number, rs2: number, offset: number) {
-   emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rs1), offset, tmp());
-   emitBitvmOp(opcodes, bitvm.ASM_ADD, reg2mem(rs2), 0, tmp2());
+   emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rs1), offset, tmp()); // tmp is now rs1 + offset which is the memroy point where we want to store rs2[0:15]
+   emitBitvmOp(opcodes, bitvm.ASM_ADD, reg2mem(rs2), 0, tmp2()); // Move rs2 to tmp2, now we want to store tmp2 to the memory location in tmp.
 
    // first byte
-   emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), 0xFF, tmp2());
-   emitBitvmOp(opcodes, bitvm.ASM_STORE, tmp2(), tmp(), NaN);
+   emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), 0xFF, tmp2()); // we get the last 8 bit and store it in tmp2
+   emitBitvmOp(opcodes, bitvm.ASM_STORE, tmp2(), tmp(), NaN); // Finally wrote the last byte, now we have to write rs2[9:15]
 
    // second byte
-   emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), 1, tmp());
+   emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), 1, tmp()); // We move 1 byte to write the second half.
 
-   emitBitvmOp(opcodes, bitvm.ASM_ADD, reg2mem(rs2), 0, tmp2());
+   emitBitvmOp(opcodes, bitvm.ASM_ADD, reg2mem(rs2), 0, tmp2()); // rs2 is the value we want to write, moved it to tmp2
    // shift right 8
-   for (let i = 0; i < 8; i++) {
-      emitBitvmOp(opcodes, bitvm.ASM_RSHIFT1, tmp2(), tmp2(), tmp2());
+   for (let i = 0; i < 1; i++) {
+      emitBitvmOp(opcodes, bitvm.ASM_RSHIFT8, tmp2(), tmp2(), tmp2());
    }
    emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), 0xFF, tmp2());
    emitBitvmOp(opcodes, bitvm.ASM_STORE, tmp2(), tmp(), NaN);
 }
 
 function emitSW(opcodes: BitVMOpcode[], rs1: number, rs2: number, offset: number) {
+   // Calculate base address and store it in tmp() for memory access
    emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rs1), offset, tmp());
+
+   // Temporarily store rs2 value for manipulation
    emitBitvmOp(opcodes, bitvm.ASM_ADD, reg2mem(rs2), 0, tmp2());
 
-   // first byte
-   emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), 0xFF, tmp2());
-   emitBitvmOp(opcodes, bitvm.ASM_STORE, tmp2(), tmp(), NaN);
+   for (let i = 0; i < 4; i++) {
+       // Isolate the current byte from tmp2() and store it
+       emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), 0xFF, tmp3()); // Use a new tmp register if necessary
+       emitBitvmOp(opcodes, bitvm.ASM_STORE, tmp3(), tmp(), NaN);
 
-   // second byte
-   emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), 1, tmp());
-
-   emitBitvmOp(opcodes, bitvm.ASM_ADD, reg2mem(rs2), 0, tmp2());
-   // shift right 8
-   for (let i = 0; i < 8; i++) {
-      emitBitvmOp(opcodes, bitvm.ASM_RSHIFT1, tmp2(), tmp2(), tmp2());
+       // Prepare for the next byte unless it's the last byte
+       if (i < 3) {
+           emitBitvmOp(opcodes, bitvm.ASM_RSHIFT8, tmp2(), tmp2(), tmp2());
+           emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), 1, tmp()); // Increment address for next byte
+       }
    }
-   emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), 0xFF, tmp2());
-   emitBitvmOp(opcodes, bitvm.ASM_STORE, tmp2(), tmp(), NaN);
-
-   // third byte
-   emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), 1, tmp());
-
-   emitBitvmOp(opcodes, bitvm.ASM_ADD, reg2mem(rs2), 0, tmp2());
-   // shift right 16
-   for (let i = 0; i < 16; i++) {
-      emitBitvmOp(opcodes, bitvm.ASM_RSHIFT1, tmp2(), tmp2(), tmp2());
-   }
-   emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), 0xFF, tmp2());
-   emitBitvmOp(opcodes, bitvm.ASM_STORE, tmp2(), tmp(), NaN);
-
-   // fourth byte
-   emitBitvmOp(opcodes, bitvm.ASM_ADDI, tmp(), 1, tmp());
-
-   emitBitvmOp(opcodes, bitvm.ASM_ADD, reg2mem(rs2), 0, tmp2());
-   // shift right 24
-   for (let i = 0; i < 24; i++) {
-      emitBitvmOp(opcodes, bitvm.ASM_RSHIFT1, tmp2(), tmp2(), tmp2());
-   }
-   emitBitvmOp(opcodes, bitvm.ASM_ANDI, tmp2(), 0xFF, tmp2());
-   emitBitvmOp(opcodes, bitvm.ASM_STORE, tmp2(), tmp(), NaN);
 }
+
 
 function emitJALR(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number, riscv_pc: number) {
    emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rs1), imm, tmp());
@@ -318,23 +270,43 @@ function emitBNE(opcodes: BitVMOpcode[], rs1: number, rs2: number, imm: number, 
    opcodes.push({ opcode: new bitvm.Instruction(bitvm.ASM_BNE, reg2mem(rs1), reg2mem(rs2), 0), find_label: "_riscv_pc_" + ((riscv_pc + imm) & 0xFFFFFFFF), find_target: "addressC" });
 }
 
-function emitSLLI(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number) {
+function emitSLLI(opcodes:BitVMOpcode[], rd: number, rs1: number, imm:number) {
    if (rd != 0) {
-      emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rs1), 0, reg2mem(rd));
-      for (let i = 0; i < imm; i++) {
-         emitBitvmOp(opcodes, bitvm.ASM_ADD, reg2mem(rd), reg2mem(rd), reg2mem(rd));
-      }
+       emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rs1), 0, reg2mem(rd));
+
+       // Calculate the number of times to apply ASM_LSHIFT8 based on the immediate value.
+       const shiftsBy8 = Math.floor(imm / 8);
+       for (let i = 0; i < shiftsBy8; i++) {
+           emitBitvmOp(opcodes, bitvm.ASM_LSHIFT8, reg2mem(rd), 0, reg2mem(rd));
+       }
+
+       // Calculate any remaining shifts that are less than 8 bits.
+       const remainingShifts = imm % 8;
+       for (let i = 0; i < remainingShifts; i++) {
+           emitBitvmOp(opcodes, bitvm.ASM_ADD, reg2mem(rd), reg2mem(rd), reg2mem(rd));
+       }
    }
 }
 
-function emitSRLI(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number) {
+
+function emitSRLI(opcodes:BitVMOpcode[], rd: number, rs1: number, imm:number) {
    if (rd != 0) {
-      emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rs1), 0, reg2mem(rd));
-      for (let i = 0; i < imm; i++) {
-         emitBitvmOp(opcodes, bitvm.ASM_RSHIFT1, reg2mem(rd), 0, reg2mem(rd));
-      }
+       emitBitvmOp(opcodes, bitvm.ASM_ADDI, reg2mem(rs1), 0, reg2mem(rd));
+
+       // Calculate the number of times to apply ASM_RSHIFT8 based on the immediate value.
+       const shiftsBy8 = Math.floor(imm / 8);
+       for (let i = 0; i < shiftsBy8; i++) {
+           emitBitvmOp(opcodes, bitvm.ASM_RSHIFT8, reg2mem(rd), 0, reg2mem(rd));
+       }
+
+       // Calculate any remaining shifts that are less than 8 bits.
+       const remainingShifts = imm % 8;
+       for (let i = 0; i < remainingShifts; i++) {
+           emitBitvmOp(opcodes, bitvm.ASM_RSHIFT1, reg2mem(rd), 0, reg2mem(rd));
+       }
    }
 }
+
 
 function emitSRAI(opcodes: BitVMOpcode[], rd: number, rs1: number, imm: number) {
    if (rd != 0) {
